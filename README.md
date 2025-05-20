@@ -1,6 +1,6 @@
 # M01-Converter
 
-This is a CLI application written in C++ that takes in a save file (.sav) from the Korg M01D application for the DS,
+This is a CLI application written in C++ that takes in a save file (.sav) from the Korg M01 application for the DS,
 and outputs MIDI (.mid) files corresponding to each of the songs stored in the save file.
 
 It has two modes of running:
@@ -15,26 +15,26 @@ Thank you to [f4mi](https://bsky.app/profile/f4mi.bsky.social) for the inspirati
 out [their video on the topic](https://www.youtube.com/watch?v=7ptN-3RT8yA)!
 
 ## Usage
-Download the version for your platform from [releases](https://github.com/Mystievous/M01D-Converter/releases).
+Download the version for your platform from [releases](https://github.com/Mystievous/M01-Converter/releases).
 
 Then, extract the archive and bring your .sav file to the folder with the executable.
 
 You can run the tool with the following command:
 ```sh
 # Windows
-./M01D-Converter.exe SaveFile.sav
+./M01-Converter.exe SaveFile.sav
 
 # Linux/Mac
-./M01D-Converter SaveFile.sav
+./M01-Converter SaveFile.sav
 ```
 
 Or, if you want to use the extended export, make sure the config.yml is next to the executable and add `-e`:
 ```sh
 # Windows
-./M01D-Converter.exe -e SaveFile.sav
+./M01-Converter.exe -e SaveFile.sav
 
 # Linux/Mac
-./M01D-Converter -e SaveFile.sav
+./M01-Converter -e SaveFile.sav
 ```
 
 ## Features
