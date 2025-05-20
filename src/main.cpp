@@ -15,7 +15,7 @@ constexpr std::string kFileSignature = "M01W";
 
 int main(int argc, char** argv)
 {
-    cxxopts::Options options("M01D-Converter", "Convert Korg M01D DS songs to MIDI files");
+    cxxopts::Options options("M01-Converter", "Convert Korg M01 DS songs to MIDI files");
     options.add_options()
         ("h,help", "Show help")
         ("e,extended", "Create an 'extended' MIDI file.")
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         fread(&header, sizeof(FileHeader), 1, saveFile);
         if (auto signature = std::string(header.signature, 4); signature != kFileSignature)
         {
-            std::cerr << "Error: File does not seem to be a valid M01D DS .sav File." << std::endl;
+            std::cerr << "Error: File does not seem to be a valid M01 DS .sav File." << std::endl;
             fclose(saveFile);
             return 1;
         }

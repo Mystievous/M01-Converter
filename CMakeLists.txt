@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.31)
-project(M01D-Converter)
+project(M01-Converter)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(M01D-Converter
+add_executable(M01-Converter
         src/main.cpp
         src/Song.cpp
         src/Measure.cpp
@@ -26,4 +26,4 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(yaml-cpp)
 
-target_link_libraries(M01D-Converter PUBLIC yaml-cpp::yaml-cpp)
+target_link_libraries(M01-Converter PUBLIC yaml-cpp::yaml-cpp)
