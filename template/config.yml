@@ -1,0 +1,1188 @@
+"Instruments":
+  "M1":
+    "Keyboard":
+      "Piano":
+        program: 1
+      "E.Piano1":
+        program: 2
+      "E.Piano2":
+        program: 4
+      "E.Piano3":
+        program: 5
+      "Clav":
+        program: 7
+      "Harpsicord":
+        program: 6
+      "Organ1":
+        program: 16
+      "Organ2":
+        program: 17
+      "MagicOrgan":
+        program: 98
+      "DW-Piano":
+        program: 2
+      "DW-EP1":
+        program: 5
+      "DW-EP2":
+        program: 4
+      "DW-EP3":
+        program: 2
+      "DW-Clav":
+        program: 7
+      "DW-Organ1":
+        program: 17
+      "DW-Organ2":
+        program: 18
+    "Guitar/Mallet":
+      "Guitar1":
+        program: 24
+      "Guitar2":
+        program: 25
+      "E.Guitar":
+        program: 27
+      "Sitar1":
+        program: 104
+      "Sitar2":
+        program: 104
+      "Vibes":
+        program: 11
+      "Bell":
+        program: 15
+      "Tubular":
+        program: 14
+      "BellRing":
+        program: 8
+      "Karimba":
+        program: 108
+      "SynMallet":
+        program: 12
+      "DW-Vibe":
+        program: 11
+      "DW-Bell":
+        program: 10
+    "Bass":
+      "A.Bass":
+        program: 32
+      "PickBass":
+        program: 34
+      "E.Bass":
+        program: 36
+      "Fretless":
+        program: 35
+      "SynBass1":
+        program: 38
+      "SynBass2":
+        program: 39
+      "SynBass3":
+        program: 87
+      "DW-Bass1":
+        program: 33
+      "DW-Bass2":
+        program: 37
+    "Strings/Pad":
+      "Strings":
+        program: 48
+      "Voices":
+        program: 54
+      "Choir":
+        program: 52
+    "Brass/Reed":
+      "Flute":
+        program: 73
+      "PanFlute":
+        program: 75
+      "Bottles":
+        program: 76
+      "TenorSax":
+        program: 66
+      "Trumpet":
+        program: 56
+      "MuteTp":
+        program: 59
+      "TubaFlugel":
+        program: 58
+      "DoubleReed":
+        program: 68
+      "Brass1":
+        program: 62
+      "Brass2":
+        program: 61
+    "Lead Synth":
+      "Wire":
+        program: 84
+      "SawWave":
+        program: 81
+      "SquareWave":
+        program: 80
+      "25%Pulse":
+        program: 85
+      "10%Pulse":
+        program: 87
+      "DW-Tri":
+        program: 71
+      "DW-Sine":
+        program: 79
+      "VoiceWave":
+        program: 53
+      "DW-Voice":
+        program: 60
+    "Poly Synth":
+      "Universe":
+        program: 94
+      "SoftHorn":
+        program: 63
+      "SynBrass":
+        program: 29
+      "FvWave":
+        program: 89
+      "MvWave":
+        program: 89
+      "PanWave":
+        program: 105
+      "PingWave":
+        program: 31
+      "Digital1":
+        program: 23
+      "Digital2":
+        program: 15
+      "Digital3":
+        program: 106
+      "Digital4":
+        program: 82
+      "Digital5":
+        program: 10
+      "Digital6":
+        program: 101
+    "SE/Other":
+      "KotoTrem":
+        program: 107
+      "BambooTrem":
+        program: 12
+      "Rhythm":
+        program: 13
+      "Lore":
+        program: 122
+      "FlexaTone":
+        program: 124
+      "WindBells":
+        program: 125
+    "Hit/Chord":
+      "Pole":
+        program: 113
+      "Pop":
+        program: 13
+      "MetalHit":
+        program: 120
+    "Drum Kit":
+      "DrumKit1":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 56
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 35
+          - 36
+      "DrumKit2":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 63
+          - 64
+          - 47
+          - 45
+          - 46
+          - 42
+          - 40
+          - 38
+          - 35
+          - 36
+      "DrumKit3":
+        channel: 9
+        map:
+          - 55
+          - 49
+          - 54
+          - 82
+          - 47
+          - 45
+          - 46
+          - 42
+          - 39
+          - 38
+          - 37
+          - 36
+      "PercKit":
+        channel: 9
+        map:
+          - 81
+          - 84
+          - 73
+          - 74
+          - 76
+          - 77
+          - 70
+          - 78
+          - 65
+          - 66
+          - 63
+          - 64
+      "NoiseKit":
+        channel: 9
+        map:
+          - 66
+          - 53
+          - 79
+          - 76
+          - 77
+          - 75
+          - 68
+          - 64
+          - 56
+          - 70
+          - 36
+          - 35
+
+  "01/W":
+    "Keyboard":
+      "A.Piano":
+        program: 0
+      "SoftEP":
+        program: 4
+      "E.Piano":
+        program: 5
+      "PianoPad1":
+        program: 96
+      "PianoPad2":
+        program: 90
+      "SynPiano":
+        program: 39
+      "Clav":
+        program: 7
+      "Harpsicord":
+        program: 6
+      "PercOrgan":
+        program: 17
+        transposition: 12
+      "Organ1":
+        program: 70
+      "Organ2":
+        program: 88
+      "Rotary":
+        program: 102
+      "GospelOrg":
+        program: 18
+        transposition: 12
+      "PipeOrgan1":
+        program: 16
+      "PipeOrgan2":
+        program: 19
+      "Accordion":
+        program: 21
+    "Guitar/Mallet":
+      "G.Guitar":
+        program: 24
+      "F.Guitar":
+        program: 25
+      "HardPick":
+        program: 27
+      "E.Guitar":
+        program: 26
+      "MuteGuitar":
+        program: 28
+      "DistGuitar":
+        program: 30
+      "FeedBacker":
+        program: 29
+      "Banjo":
+        program: 105
+      "Harp":
+        program: 46
+      "Marimba":
+        program: 12
+      "Vibe":
+        program: 11
+      "MusicBox":
+        program: 10
+      "Gamelan":
+        program: 113
+        transposition: -12
+      "DigiBell":
+        program: 8
+      "MetalBell":
+        program: 14
+      "VS Bell":
+        program: 108
+    "Bass":
+      "A.Bass1":
+        program: 32
+      "A.Bass2":
+        program: 32
+      "Fretless":
+        program: 35
+      "E.Bass1":
+        program: 33
+      "E.Bass2":
+        program: 34
+      "E.Bass3":
+        program: 37
+      "SlapBass":
+        program: 36
+      "SynthBass1":
+        program: 38
+      "SynthBass2":
+        program: 39
+      "TechBass":
+        program: 105
+      "BowBowBass":
+        program: 102
+      "RezzzzBass":
+        program: 96
+      "Residrops":
+        program: 62
+    "Strings/Pad":
+      "Violin":
+        program: 40
+      "Cello":
+        program: 42
+      "Pizzicato":
+        program: 45
+      "StringEns":
+        program: 48
+      "AnaStrings":
+        program: 49
+      "Choir":
+        program: 52
+      "SoftChoir":
+        program: 54
+      "Ahhs":
+        program: 50
+      "AirVox":
+        program: 53
+      "SynVox":
+        program: 91
+    "Brass/Reed":
+      "Trumpet":
+        program: 56
+      "Trombone":
+        program: 57
+      "MuteTp":
+        program: 59
+      "HardFlute":
+        program: 73
+      "TinFlute":
+        program: 75
+      "BassonOboe":
+        program: 70
+      "Clarinet":
+        program: 71
+      "SopranoSax":
+        program: 64
+      "AltoSax":
+        program: 65
+      "BariSax":
+        program: 67
+      "Tuba/FrH":
+        program: 60
+      "Harmonica":
+        program: 22
+      "BrassEns1":
+        program: 61
+      "BrassEns2":
+        program: 63
+    "Lead Synth":
+      "MonoLead":
+        program: 80
+      "MiniLead":
+        program: 81
+      "VS 89":
+        program: 88
+      "4%Pulse":
+        program: 87
+      "SynSine":
+        program: 99
+      "Sine":
+        program: 79
+    "Poly Synth":
+      "RawDeal":
+        program: 81
+      "Detune":
+        program: 87
+      "EtherBell":
+        program: 84
+      "FreshAir":
+        program: 94
+      "Ghostly":
+        program: 95
+      "Ephemerals":
+        program: 89
+      "AliaBass":
+        program: 86
+      "UnderWater":
+        program: 91
+      "Spectrum1":
+        program: 90
+      "Spectrum2":
+        program: 126
+        transposition: -7
+      "Spectrum3":
+        program: 122
+        transposition: -2
+    "SE/Other":
+      "Stadium":
+        program: 126
+      "Thing":
+        program: 123
+      "TriRoll":
+        program: 124
+      "Clicker":
+        program: 125
+      "Crickets1":
+        program: 122
+      "Crickets2":
+        program: 123
+        transposition: -24
+      "MagicBell":
+        program: 96
+      "IronUp":
+        program: 74
+        transposition: -12
+      "Tooter":
+        program: 76
+        transposition: -12
+      "FluteFX":
+        program: 75
+        transposition: -12
+      "Flutter":
+        program: 75
+    "Hit/Chord":
+      "OrchHit":
+        program: 55
+        transposition: -12
+      "VibeHit":
+        program: 115
+        transposition: 12
+      "Gong":
+        program: 114
+        transposition: -12
+      "Timpani":
+        program: 47
+      "OrchPerc":
+        program: 116
+      "SynClaves":
+        program: 8
+        transposition: 12
+      "SynTom1":
+        program: 117
+        transposition: -12
+      "SynTom2":
+        program: 118
+      "Zap1":
+        program: 118
+      "Zap2":
+        program: 120
+      "Industry1":
+        program: 115
+        transposition: 12
+      "Industry2":
+        program: 113
+        transposition: -12
+      "RevThing":
+        program: 119
+    "Drum Kit":
+      "TotalKit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 63
+          - 64
+          - 47
+          - 45
+          - 46
+          - 42
+          - 40
+          - 38
+          - 35
+          - 36
+      "RockKit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 56
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 35
+          - 36
+      "DanceKit":
+        channel: 9
+        map:
+          - 49
+          - 57
+          - 53
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 35
+          - 36
+      "AnalogKit":
+        channel: 9
+        map:
+          - 41
+          - 70
+          - 75
+          - 37
+          - 47
+          - 45
+          - 46
+          - 42
+          - 39
+          - 38
+          - 35
+          - 36
+      "HipHopKit":
+        channel: 9
+        map:
+          - 57
+          - 49
+          - 66
+          - 41
+          - 79
+          - 78
+          - 42
+          - 44
+          - 40
+          - 38
+          - 35
+          - 36
+      "R&BKit":
+        channel: 9
+        map:
+          - 84
+          - 58
+          - 81
+          - 80
+          - 54
+          - 70
+          - 46
+          - 42
+          - 39
+          - 38
+          - 37
+          - 36
+      "BD&SDKit1":
+        channel: 9
+        map:
+          - 40
+          - 40
+          - 38
+          - 38
+          - 38
+          - 40
+          - 40
+          - 38
+          - 36
+          - 35
+          - 36
+          - 36
+      "BD&SDKit2":
+        channel: 9
+        map:
+          - 49
+          - 38
+          - 38
+          - 38
+          - 40
+          - 40
+          - 38
+          - 39
+          - 41
+          - 35
+          - 35
+          - 36
+      "TomKit":
+        channel: 9
+        map:
+          - 50
+          - 47
+          - 45
+          - 41
+          - 50
+          - 47
+          - 45
+          - 41
+          - 50
+          - 47
+          - 45
+          - 41
+      "CymbalKit":
+        channel: 9
+        map:
+          - 52
+          - 57
+          - 59
+          - 51
+          - 55
+          - 49
+          - 46
+          - 42
+          - 46
+          - 44
+          - 42
+          - 44
+      "PerkKit1":
+        channel: 9
+        map:
+          - 84
+          - 55
+          - 75
+          - 60
+          - 60
+          - 61
+          - 82
+          - 82
+          - 64
+          - 62
+          - 62
+          - 63
+      "PerkKit2":
+        channel: 9
+        map:
+          - 72
+          - 71
+          - 67
+          - 68
+          - 78
+          - 79
+          - 69
+          - 69
+          - 56
+          - 65
+          - 65
+          - 66
+      "SEKit":
+        channel: 9
+        map:
+          - 57
+          - 55
+          - 41
+          - 84
+          - 45
+          - 52
+          - 79
+          - 78
+          - 81
+          - 76
+          - 58
+          - 38
+
+  "EX":
+    "Keyboard":
+      "ElecGrand":
+        program: 2
+      "E.Piano1":
+        program: 4
+      "E.Piano2":
+        program: 5
+      "ToyPiano":
+        program: 13
+      "Organ":
+        program: 17
+        transposition: 12
+      "VoxOrgan":
+        program: 16
+        transposition: 12
+      "Musette":
+        program: 77
+    "Guitar/Mallet":
+      "ChorusGtr":
+        program: 25
+      "JazzGuitar":
+        program: 26
+      "DistGuitar":
+        program: 30
+      "SitarTambr":
+        program: 104
+      "Shamisen":
+        program: 106
+      "Koto":
+        program: 107
+      "Glocken":
+        program: 9
+        transposition: 12
+      "SteelDrum":
+        program: 114
+      "BottlePop":
+        program: 46
+    "Bass":
+      "E.Bass":
+        program: 33
+      "SlapBass":
+        program: 36
+      "BoostSaw":
+        program: 81
+      "ElectroBs":
+        program: 81
+      "DarkBass":
+        program: 79
+      "FilterBass":
+        program: 90
+      "FatBass":
+        program: 90
+      "SawRezBass":
+        program: 87
+      "SquRezBass":
+        program: 80
+      "DiscoBass":
+        program: 87
+      "VPMBass1":
+        program: 38
+      "VPMBass2":
+        program: 105
+      "AttackBass":
+        program: 81
+      "AcidDistBs":
+        program: 81
+      "DetuneBass":
+        program: 81
+      "WobbleBass":
+        program: 39
+    "Strings/Pad":
+      "Strings":
+        program: 48
+      "StrQuartet":
+        program: 43
+      "TapeString":
+        program: 44
+      "AahChoir":
+        program: 52
+      "OohChoir":
+        program: 53
+      "VocoderPad":
+        program: 91
+      "AnalogStr1":
+        program: 50
+      "AnalogStr2":
+        program: 50
+      "DarkPad":
+        program: 89
+      "NoisePad":
+        program: 101
+      "AnalogPad":
+        program: 51
+      "SquarePad":
+        program: 95
+      "5thPad":
+        program: 86
+      "OctavePad":
+        program: 19
+    "Brass/Reed":
+      "Trumpet":
+        program: 56
+      "TinWhistle":
+        program: 72
+      "TapeFlute":
+        program: 68
+      "Shakuhachi":
+        program: 77
+      "AltoSax":
+        program: 65
+      "TenorSax":
+        program: 66
+      "Bagpipe":
+        program: 109
+      "BrassEns":
+        program: 61
+    "Lead Synth":
+      "SoftLead":
+        program: 90
+      "UrbanLead":
+        program: 90
+      "HiResoLead":
+        program: 81
+      "MS20Lead":
+        program: 82
+      "OctaveLead":
+        program: 88
+        transposition: 12
+      "DriveLead":
+        program: 81
+      "RaveLead":
+        program: 81
+      "DualSquare":
+        program: 80
+      "SynWire1":
+        program: 84
+      "SynWire2":
+        program: 81
+      "SyncLoop":
+        program: 80
+      "5thSine":
+        program: 86
+      "5thSaw":
+        program: 86
+      "5thSquare":
+        program: 86
+      "ShortArp":
+        program: 45
+    "Poly Synth":
+      "DetuneStab":
+        program: 81
+      "UnisonStab":
+        program: 81
+      "5thStab":
+        program: 86
+      "PolyComp":
+        program: 38
+      "SquDetune":
+        program: 80
+      "VPMBrass":
+        program: 62
+      "SynthHorn":
+        program: 60
+      "DarkSynth":
+        program: 89
+      "NoisyComp":
+        program: 96
+      "RisingPad":
+        program: 97
+      "TremoloSin":
+        program: 44
+      "TrillPad":
+        program: 88
+      "LPFSweep":
+        program: 95
+      "HPFSweep":
+        program: 95
+      "WaveSweep":
+        program: 95
+      "Palawan":
+        program: 93
+    "SE/Other":
+      "Applause":
+        program: 126
+      "HeartBeat":
+        program: 116
+        transposition: -12
+      "GunShot":
+        program: 127
+      "CarSFX":
+        program: 119
+      "Stream":
+        program: 122
+        transposition: 12
+      "Forest":
+        program: 123
+      "ShakerLoop":
+        program: 125
+      "Noise":
+        program: 126
+        transposition: -24
+      "8bitNoise":
+        program: 127
+      "NoiseShot":
+        program: 127
+      "NoiseSplit":
+        program: 101
+      "SweepSplit":
+        program: 101
+      "SirenUp":
+        program: 124
+      "SirenDown":
+        program: 124
+      "Modulation":
+        program: 124
+      "Signal":
+        program: 89
+    "Hit/Chord":
+      "M1PfChord":
+        program: 1
+      "EPChord":
+        program: 4
+      "min7Organ":
+        program: 18
+        transposition: 12
+      "GtrChord1":
+        program: 25
+        transposition: 12
+      "GtrChord2":
+        program: 27
+      "PowerChord":
+        program: 29
+      "StrChord":
+        program: 49
+      "Maj7Pad":
+        program: 89
+      "SynChord1":
+        program: 81
+      "SynChord2":
+        program: 81
+      "SynChord3":
+        program: 81
+      "SynChord4":
+        program: 97
+      "Glissando":
+        program: 80
+      "OrchHits":
+        program: 55
+        transposition: 24
+      "DanceHits":
+        program: 87
+    "Drum Kit":
+      "DDD1Kit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 56
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 37
+          - 36
+      "DDM110Kit":
+        channel: 9
+        map:
+          - 54
+          - 57
+          - 63
+          - 64
+          - 47
+          - 45
+          - 46
+          - 42
+          - 39
+          - 38
+          - 37
+          - 36
+      "S3Kit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 37
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "LynKit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 63
+          - 64
+          - 47
+          - 45
+          - 46
+          - 42
+          - 39
+          - 38
+          - 37
+          - 36
+      "StandrdKit":
+        channel: 9
+        map:
+          - 51
+          - 57
+          - 39
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "HouseKit":
+        channel: 9
+        map:
+          - 49
+          - 57
+          - 39
+          - 63
+          - 63
+          - 64
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "ElectroKit":
+        channel: 9
+        map:
+          - 49
+          - 57
+          - 39
+          - 50
+          - 47
+          - 41
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "MinimalKit":
+        channel: 9
+        map:
+          - 74
+          - 78
+          - 39
+          - 76
+          - 76
+          - 77
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "TronicaKit":
+        channel: 9
+        map:
+          - 79
+          - 82
+          - 35
+          - 58
+          - 77
+          - 76
+          - 81
+          - 80
+          - 68
+          - 70
+          - 36
+          - 35
+      "D&BKit":
+        channel: 9
+        map:
+          - 51
+          - 54
+          - 77
+          - 37
+          - 40
+          - 36
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "R&BKit":
+        channel: 9
+        map:
+          - 84
+          - 49
+          - 39
+          - 39
+          - 47
+          - 45
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "HipHopKit":
+        channel: 9
+        map:
+          - 51
+          - 78
+          - 39
+          - 56
+          - 47
+          - 45
+          - 46
+          - 42
+          - 40
+          - 38
+          - 36
+          - 35
+      "EthnicKit":
+        channel: 9
+        map:
+          - 62
+          - 62
+          - 64
+          - 62
+          - 63
+          - 64
+          - 82
+          - 82
+          - 53
+          - 38
+          - 36
+          - 35
+      "SEKit":
+        channel: 9
+        map:
+          - 52
+          - 78
+          - 58
+          - 58
+          - 79
+          - 72
+          - 81
+          - 38
+          - 78
+          - 79
+          - 55
+          - 35
+      "CartoonKit":
+        channel: 9
+        map:
+          - 52
+          - 53
+          - 74
+          - 73
+          - 76
+          - 77
+          - 72
+          - 71
+          - 58
+          - 78
+          - 58
+          - 58
+      "GtrElement":
+        channel: 9
+        map:
+          - 71
+          - 70
+          - 69
+          - 68
+          - 67
+          - 66
+          - 65
+          - 64
+          - 63
+          - 62
+          - 61
+          - 60
