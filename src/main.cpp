@@ -19,7 +19,8 @@ int main(int argc, char** argv)
     options.add_options()
         ("h,help", "Show help")
         ("e,extended", "Create an 'extended' MIDI file.")
-        ("c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.", cxxopts::value<std::string>())
+        ("c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.",
+         cxxopts::value<std::string>())
         ("i,input", "Input .sav file", cxxopts::value<std::string>());
 
     options.parse_positional({"input"});
@@ -80,16 +81,17 @@ int main(int argc, char** argv)
                 {
                     auto& midiFile = song.makeExtendedMidiFile(result["config"].as<std::string>());
                     std::string filename = song.identifier.name;
-                    midiFile.write(filename + "_gen.mid");
+                    midiFile.write(filename + ".mid");
                 }
                 else
                 {
                     auto& midiFile = song.makeExtendedMidiFile();
                     std::string filename = song.identifier.name;
-                    midiFile.write(filename + "_gen.mid");
+                    midiFile.write(filename + ".mid");
                 }
             }
-        } else
+        }
+        else
         {
             for (const auto& song : songs)
             {
