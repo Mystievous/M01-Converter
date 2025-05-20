@@ -5,7 +5,7 @@ and outputs MIDI (.mid) files corresponding to each of the songs stored in the s
 
 It has two modes of running:
 
-1. An (almost) exactly match to the MIDI export feature of the 3DS version of the app
+1. An (almost) exact match to the MIDI export feature of the 3DS version of the app
     - It is not *exact* byte-for-byte identical, but it only differs in slight rounding differences and the order of
       messages that occur simultaneously (i.e. the order of the data for notes that make up a chord on the same beat).
 2. An export with "extended" features, such as automatically setting Patch Changes, and many other CC messages like
@@ -13,6 +13,29 @@ It has two modes of running:
 
 Thank you to [f4mi](https://bsky.app/profile/f4mi.bsky.social) for the inspiration, go check
 out [their video on the topic](https://www.youtube.com/watch?v=7ptN-3RT8yA)!
+
+## Usage
+Download the version for your platform from [releases](https://github.com/Mystievous/M01D-Converter/releases).
+
+Then, extract the archive and bring your .sav file to the folder with the executable.
+
+You can run the tool with the following command:
+```sh
+# Windows
+./M01D-Converter.exe SaveFile.sav
+
+# Linux/Mac
+./M01D-Converter SaveFile.sav
+```
+
+Or, if you want to use the extended export, make sure the config.yml is next to the executable and add `-e`:
+```sh
+# Windows
+./M01D-Converter.exe -e SaveFile.sav
+
+# Linux/Mac
+./M01D-Converter -e SaveFile.sav
+```
 
 ## Features
 
