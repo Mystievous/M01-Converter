@@ -57,21 +57,20 @@ public:
 
     InstrumentHelper();
 
-    [[nodiscard]] InstrumentName getInstrumentName(uint8_t bankId, uint8_t subBankId, uint8_t programId) const;
-    [[nodiscard]] InstrumentIds getProgramChangeIds(const std::string& instrumentName) const;
+    [[nodiscard]] InstrumentName GetInstrumentName(uint8_t bankId, uint8_t subBankId, uint8_t programId) const;
 
-    [[nodiscard]] YAML::Node getInstrumentConfig(const YAML::Node& config, const uint8_t& bankId,
-                                                 const uint8_t& subBankId,
-                                                 const uint8_t& programId) const;
-    static YAML::Node getInstrumentConfig(const YAML::Node& config, const std::string& bankName,
+    [[nodiscard]] InstrumentIds GetProgramChangeIds(const std::string& instrumentName) const;
+
+    [[nodiscard]] YAML::Node GetInstrumentConfig(const YAML::Node& config, const uint8_t& bankId,
+                                                 const uint8_t& subBankId, const uint8_t& programId) const;
+
+    static YAML::Node GetInstrumentConfig(const YAML::Node& config, const std::string& bankName,
                                           const std::string& subBankName, const std::string& programName);
 
-    static uint8_t remapNoteNumber(const YAML::Node& instrumentConfig, const uint8_t& noteNumber);
+    static uint8_t RemapNoteNumber(const YAML::Node& instrumentConfig, const uint8_t& noteNumber);
 
-    static uint8_t mapRange(const long& value, const long& min, const long& max, const long& newMin, const long& newMax)
-    {
-        return static_cast<uint8_t>((value - min) * (newMax - newMin) / (max - min) + newMin);
-    }
+    static uint8_t MapRange(const long& value, const long& min, const long& max, const long& newMin,
+                            const long& newMax);
 };
 
 

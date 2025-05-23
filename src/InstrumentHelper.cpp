@@ -229,7 +229,7 @@ InstrumentHelper::InstrumentHelper() : instrumentMap(defaultMap)
 {
 }
 
-InstrumentName InstrumentHelper::getInstrumentName(const uint8_t bankId, const uint8_t subBankId,
+InstrumentName InstrumentHelper::GetInstrumentName(const uint8_t bankId, const uint8_t subBankId,
                                                    const uint8_t programId) const
 {
     if (bankId > kNumberOfBanks || subBankId > kNumberOfSubBanks)
@@ -258,7 +258,7 @@ InstrumentName InstrumentHelper::getInstrumentName(const uint8_t bankId, const u
     return InstrumentName(bankName, subBankName, subBank[programId]);
 }
 
-InstrumentIds InstrumentHelper::getProgramChangeIds(const std::string& instrumentName) const
+InstrumentIds InstrumentHelper::GetProgramChangeIds(const std::string& instrumentName) const
 {
     for (const auto& [bankName, subBanks] : instrumentMap)
     {
@@ -294,14 +294,14 @@ InstrumentIds InstrumentHelper::getProgramChangeIds(const std::string& instrumen
     return {};
 }
 
-YAML::Node InstrumentHelper::getInstrumentConfig(const YAML::Node& config, const uint8_t& bankId,
+YAML::Node InstrumentHelper::GetInstrumentConfig(const YAML::Node& config, const uint8_t& bankId,
                                                  const uint8_t& subBankId, const uint8_t& programId) const
 {
-    const auto& [bank, subBank, program] = getInstrumentName(bankId, subBankId, programId);
-    return getInstrumentConfig(config, bank, subBank, program);
+    const auto& [bank, subBank, program] = GetInstrumentName(bankId, subBankId, programId);
+    return GetInstrumentConfig(config, bank, subBank, program);
 }
 
-YAML::Node InstrumentHelper::getInstrumentConfig(const YAML::Node& config, const std::string& bankName,
+YAML::Node InstrumentHelper::GetInstrumentConfig(const YAML::Node& config, const std::string& bankName,
                                                  const std::string& subBankName, const std::string& programName)
 {
     if (!config["Instruments"][bankName] || !config["Instruments"][bankName].IsMap()) return {};
@@ -316,7 +316,7 @@ YAML::Node InstrumentHelper::getInstrumentConfig(const YAML::Node& config, const
     return programConfig;
 }
 
-uint8_t InstrumentHelper::remapNoteNumber(const YAML::Node& instrumentConfig, const uint8_t& noteNumber)
+uint8_t InstrumentHelper::RemapNoteNumber(const YAML::Node& instrumentConfig, const uint8_t& noteNumber)
 {
     uint8_t realNoteNumber = noteNumber - kNoteOffset;
 
@@ -352,4 +352,10 @@ uint8_t InstrumentHelper::remapNoteNumber(const YAML::Node& instrumentConfig, co
     }
 
     return realNoteNumber;
+}
+
+uint8_t InstrumentHelper::MapRange(const long& value, const long& min, const long& max, const long& newMin,
+                                   const long& newMax)
+{
+    return static_cast<uint8_t>((value - min) * (newMax - newMin) / (max - min) + newMin);
 }

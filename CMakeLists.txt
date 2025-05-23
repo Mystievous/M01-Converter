@@ -13,7 +13,7 @@ add_executable(M01-Converter
         src/midifile/MidiFile.cpp
         src/midifile/MidiMessage.cpp
         src/InstrumentHelper.cpp
-        include/InstrumentHelper.h
+        src/SaveFile.cpp
 )
 
 include_directories(include include/midifile include/cxxopts)

@@ -31,9 +31,9 @@ public:
 
     Song(FILE* saveFile, const SongIdentifier& identifier);
 
-    [[nodiscard]] int ticksToSwing(int ticks) const;
-    [[nodiscard]] smf::MidiFile& makeMidiFile() const;
-    [[nodiscard]] smf::MidiFile& makeExtendedMidiFile(const std::string& configPath = "config.yml") const;
+    [[nodiscard]] int TicksToSwing(int ticks) const;
+    [[nodiscard]] smf::MidiFile& MakeMidiFile() const;
+    [[nodiscard]] smf::MidiFile& MakeExtendedMidiFile(const std::string& configPath = "config.yml") const;
 };
 
 
