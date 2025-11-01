@@ -6,11 +6,11 @@
 #include "SaveFile.h"
 
 #include <string>
+#include <string_view>
 
-constexpr std::string kFileSignature = "M01W";
+constexpr std::string_view kFileSignature = "M01W";
 
-
-SaveFile::SaveFile(FILE* saveFile)
+SaveFile::SaveFile(FILE *saveFile)
 {
     FileHeader header{};
     fread(&header, sizeof(FileHeader), 1, saveFile);
@@ -19,7 +19,7 @@ SaveFile::SaveFile(FILE* saveFile)
 
     if (isValid)
     {
-        for (const auto& songIdentifier : header.songIdentifiers)
+        for (const auto &songIdentifier : header.songIdentifiers)
         {
             if (songIdentifier.songHasData)
             {

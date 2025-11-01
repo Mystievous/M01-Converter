@@ -12,17 +12,13 @@
 #include "MidiFile.h"
 #include "cxxopts.hpp"
 
-constexpr std::string kFileSignature = "M01W";
+// constexpr std::string_view kFileSignature = "M01W";
 
-int main(const int argc, char** argv)
+int main(const int argc, char **argv)
 {
     cxxopts::Options options("M01-Converter", "Convert Korg M01 DS songs to MIDI files");
-    options.add_options()
-        ("h,help", "Show help")
-        ("e,extended", "Create an 'extended' MIDI file.")
-        ("c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.",
-         cxxopts::value<std::string>())
-        ("i,input", "Input .sav file", cxxopts::value<std::string>());
+    options.add_options()("h,help", "Show help")("e,extended", "Create an 'extended' MIDI file.")("c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.",
+                                                                                                  cxxopts::value<std::string>())("i,input", "Input .sav file", cxxopts::value<std::string>());
 
     options.parse_positional({"input"});
     options.positional_help("input_sav");
@@ -48,7 +44,6 @@ int main(const int argc, char** argv)
         std::getline(std::cin, inputPath);
     }
 
-
     try
     {
         std::cout << "Converting " << inputPath << " to MIDI files..." << std::endl;
@@ -57,7 +52,7 @@ int main(const int argc, char** argv)
             std::cerr << "Error: File does not exist." << std::endl;
             return 1;
         }
-        FILE* saveFile = fopen(inputPath.c_str(), "rb");
+        FILE *saveFile = fopen(inputPath.c_str(), "rb");
         std::cout << "Opened file: " << inputPath << std::endl;
         const SaveFile saveData(saveFile);
         if (!saveData.IsValid())
@@ -71,18 +66,18 @@ int main(const int argc, char** argv)
 
         if (result.count("extended"))
         {
-            for (const auto& song : saveData.GetSongs())
+            for (const auto &song : saveData.GetSongs())
             {
                 std::cout << "Making extended MIDI file for: " << song.identifier.name << ".mid" << std::endl;
                 if (result.count("config"))
                 {
-                    auto& midiFile = song.MakeExtendedMidiFile(result["config"].as<std::string>());
+                    auto &midiFile = song.MakeExtendedMidiFile(result["config"].as<std::string>());
                     std::string filename = song.identifier.name;
                     midiFile.write(filename + ".mid");
                 }
                 else
                 {
-                    auto& midiFile = song.MakeExtendedMidiFile();
+                    auto &midiFile = song.MakeExtendedMidiFile();
                     std::string filename = song.identifier.name;
                     midiFile.write(filename + ".mid");
                 }
@@ -90,16 +85,16 @@ int main(const int argc, char** argv)
         }
         else
         {
-            for (const auto& song : saveData.GetSongs())
+            for (const auto &song : saveData.GetSongs())
             {
                 std::cout << "Making MIDI file for: " << song.identifier.name << ".mid" << std::endl;
-                auto& midiFile = song.MakeMidiFile();
+                auto &midiFile = song.MakeMidiFile();
                 std::string filename = song.identifier.name;
                 midiFile.write(filename + ".mid");
             }
         }
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
