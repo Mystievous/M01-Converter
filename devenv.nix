@@ -1,7 +1,14 @@
-{ pkgs, lib, config, inputs, ... }:
+{
+  pkgs,
+  ...
+}:
 
 {
   name = "M01-Converter";
+
+  packages = with pkgs; [
+    just
+  ];
 
   # https://devenv.sh/languages/
   languages.cplusplus.enable = true;
