@@ -5,5 +5,5 @@ clean:
   rm -rf build
 
 build:
-  cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-  cmake --build build --config Release
+  cmake -S . -B build
+  cmake --build build -j

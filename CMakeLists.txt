@@ -1,29 +1,9 @@
-cmake_minimum_required(VERSION 3.31)
-project(M01-Converter)
+cmake_minimum_required(VERSION 3.15)
+project(M01-Converter VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(M01-Converter
-        src/main.cpp
-        src/Song.cpp
-        src/Measure.cpp
-        src/midifile/Binasc.cpp
-        src/midifile/MidiEvent.cpp
-        src/midifile/MidiEventList.cpp
-        src/midifile/MidiFile.cpp
-        src/midifile/MidiMessage.cpp
-        src/InstrumentHelper.cpp
-        src/SaveFile.cpp
-)
-
-include_directories(include include/midifile include/cxxopts)
-
-include(FetchContent)
-FetchContent_Declare(
-        yaml-cpp
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG 2f86d13
-)
-FetchContent_MakeAvailable(yaml-cpp)
-
-target_link_libraries(M01-Converter PUBLIC yaml-cpp::yaml-cpp)
+# Top-level orchestrator only: add the subprojects.
+add_subdirectory(src/M01Core)
+add_subdirectory(src/M01Converter)

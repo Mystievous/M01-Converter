@@ -5,9 +5,8 @@
 
 #ifndef SAVEFILE_H
 #define SAVEFILE_H
-#include <SaveStructure.h>
-#include <Song.h>
-
+#include "SaveStructure.h"
+#include "Song.h"
 
 class SaveFile
 {
@@ -15,7 +14,7 @@ class SaveFile
     std::vector<Song> songs;
 
 public:
-    explicit SaveFile(FILE* saveFile);
+    explicit SaveFile(FILE *saveFile);
 
     [[nodiscard]] bool IsValid() const;
 
@@ -24,10 +23,10 @@ public:
         return static_cast<int>(songs.size());
     }
 
-    [[nodiscard]] const std::vector<Song>& GetSongs() const
+    [[nodiscard]] const std::vector<Song> &GetSongs() const
     {
         return songs;
     }
 };
 
-#endif //SAVEFILE_H
+#endif // SAVEFILE_H
