@@ -5,7 +5,7 @@
 }:
 let
 
-  DEVKITPRO = "${pkgs.devkitNix.devkitARM}/devkitpro";
+  DEVKITPRO = "${pkgs.devkitNix.devkitARM}/opt/devkitpro";
   DEVKITARM = "${DEVKITPRO}/devkitARM";
 in
 {
