@@ -9,7 +9,8 @@
 #include <ranges>
 #include <utility>
 
-#include <yaml-cpp/yaml.h>
+#include "M01Core/simple_yaml.h"
+#include <fstream>
 
 const InstrumentMap defaultMap = {
     {"M1", {
@@ -145,77 +146,132 @@ InstrumentIds InstrumentHelper::GetProgramChangeIds(const std::string &instrumen
 
 void InstrumentHelper::LoadConfigFile(const std::string &configPath)
 {
+    printf("Loading instrument config file: %s\n", configPath.c_str());
     config_.clear();
     configLoaded_ = false;
 
-    try
+    // Use the simple_yaml parser to populate config_
+    auto optRoot = simple_yaml::ParseFile(configPath);
+    if (!optRoot.has_value())
     {
-        YAML::Node root = YAML::LoadFile(configPath);
-        if (!root["Instruments"])
-            return;
+        printf("Failed to parse instrument config file: %s\n", configPath.c_str());
+        return;
+    }
 
-        YAML::Node instruments = root["Instruments"];
-        for (auto itBank = instruments.begin(); itBank != instruments.end(); ++itBank)
+    const auto &root = *optRoot;
+    printf("Parsed config file root node type: %d\n", static_cast<int>(root.type));
+    printf("Root node has %zu entries\n", root.map.size());
+    printf("Root node entries:\n");
+    for (const auto &entry : root.map)
+    {
+        printf("  Key: %s, Type: %d\n", entry.first.c_str(), static_cast<int>(entry.second.type));
+        printf("  Contains: %s\n", root.map.contains(entry.first) ? "Yes" : "No");
+    }
+    if (!root.map.contains("Instruments"))
+    {
+        printf("Instruments section not found in config file: %s\n", configPath.c_str());
+        return;
+    }
+
+    const auto &instrumentsNode = root.map.at("Instruments");
+    if (!instrumentsNode.IsMap())
+    {
+        printf("Instruments section is not a map in config file: %s\n", configPath.c_str());
+        return;
+    }
+
+    for (const auto &bankPair : instrumentsNode.map)
+    {
+        const std::string &bankName = bankPair.first;
+        const auto &bankNode = bankPair.second;
+        if (!bankNode.IsMap())
+            continue;
+
+        for (const auto &subPair : bankNode.map)
         {
-            const std::string &bankName = itBank->first.as<std::string>();
-            YAML::Node bankNode = itBank->second;
+            const std::string &subBankName = subPair.first;
+            const auto &subNode = subPair.second;
+            if (!subNode.IsMap())
+                continue;
 
-            for (auto itSub = bankNode.begin(); itSub != bankNode.end(); ++itSub)
+            for (const auto &progPair : subNode.map)
             {
-                const std::string subBankName = itSub->first.as<std::string>();
-                YAML::Node subNode = itSub->second;
+                const std::string &programName = progPair.first;
+                const auto &progNode = progPair.second;
 
-                for (auto itProg = subNode.begin(); itProg != subNode.end(); ++itProg)
+                InstrumentConfig cfg;
+
+                // scalar fields inside progNode.map
+                auto getScalarInt = [&](const std::string &k) -> std::optional<int>
                 {
-                    const std::string programName = itProg->first.as<std::string>();
-                    YAML::Node progNode = itProg->second;
-
-                    InstrumentConfig cfg;
-
-                    if (progNode["program"])
-                        cfg.program = static_cast<uint8_t>(progNode["program"].as<int>());
-
-                    if (progNode["channel"])
-                        cfg.channel = static_cast<uint8_t>(progNode["channel"].as<int>());
-
-                    if (progNode["transposition"])
-                        cfg.transposition = progNode["transposition"].as<int>();
-
-                    if (progNode["map"])
+                    auto it = progNode.map.find(k);
+                    if (it == progNode.map.end())
+                        return std::nullopt;
+                    if (it->second.IsScalar())
                     {
-                        if (progNode["map"].IsSequence())
+                        try
                         {
-                            std::vector<uint8_t> seq;
-                            for (const auto &v : progNode["map"])
-                            {
-                                seq.push_back(static_cast<uint8_t>(v.as<int>()));
-                            }
-                            cfg.mapList = std::move(seq);
+                            return std::stoi(it->second.scalar);
                         }
-                        else if (progNode["map"].IsMap())
+                        catch (...)
                         {
-                            std::map<int, uint8_t> mp;
-                            for (auto it = progNode["map"].begin(); it != progNode["map"].end(); ++it)
-                            {
-                                int key = it->first.as<int>();
-                                uint8_t val = static_cast<uint8_t>(it->second.as<int>());
-                                mp.emplace(key, val);
-                            }
-                            cfg.mapDict = std::move(mp);
+                            return std::nullopt;
                         }
                     }
+                    return std::nullopt;
+                };
 
-                    config_[bankName][subBankName][programName] = std::move(cfg);
+                if (auto v = getScalarInt("program"))
+                    cfg.program = static_cast<uint8_t>(*v);
+                if (auto v = getScalarInt("channel"))
+                    cfg.channel = static_cast<uint8_t>(*v);
+                if (auto v = getScalarInt("transposition"))
+                    cfg.transposition = *v;
+
+                auto mapIt = progNode.map.find("map");
+                if (mapIt != progNode.map.end())
+                {
+                    const auto &mnode = mapIt->second;
+                    if (mnode.IsSequence())
+                    {
+                        std::vector<uint8_t> seq;
+                        for (const auto &s : mnode.sequence)
+                        {
+                            try
+                            {
+                                seq.push_back(static_cast<uint8_t>(std::stoi(s)));
+                            }
+                            catch (...)
+                            {
+                            }
+                        }
+                        cfg.mapList = std::move(seq);
+                    }
+                    else if (mnode.IsMap())
+                    {
+                        std::map<int, uint8_t> mp;
+                        for (const auto &entry : mnode.map)
+                        {
+                            try
+                            {
+                                int key = std::stoi(entry.first);
+                                uint8_t val = static_cast<uint8_t>(std::stoi(entry.second.scalar));
+                                mp.emplace(key, val);
+                            }
+                            catch (...)
+                            {
+                            }
+                        }
+                        cfg.mapDict = std::move(mp);
+                    }
                 }
+
+                config_[bankName][subBankName][programName] = std::move(cfg);
             }
         }
+    }
 
-        configLoaded_ = true;
-    }
-    catch (const std::exception &)
-    {
-        configLoaded_ = false;
-    }
+    configLoaded_ = true;
 }
 
 InstrumentConfig InstrumentHelper::GetInstrumentConfig(const std::string &bankName,

@@ -7,13 +7,23 @@
 
 #include <string>
 #include <string_view>
+#include <stdexcept>
+#include <cerrno>
+#include <cstring>
 
 constexpr std::string_view kFileSignature = "M01W";
 
 SaveFile::SaveFile(FILE *saveFile)
 {
     FileHeader header{};
-    fread(&header, sizeof(FileHeader), 1, saveFile);
+    size_t readCount = fread(&header, sizeof(FileHeader), 1, saveFile);
+    if (readCount != 1)
+    {
+        if (feof(saveFile))
+            throw std::runtime_error("Unexpected EOF while reading SongHeader");
+        else
+            throw std::runtime_error(std::string("fread failed: ") + std::strerror(errno));
+    }
 
     isValid = std::string(header.signature, 4) == kFileSignature;
 

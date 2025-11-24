@@ -1,11 +1,4 @@
 include(FetchContent)
-FetchContent_Declare(
-        yaml-cpp
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG 2f86d13
-)
-FetchContent_MakeAvailable(yaml-cpp)
-
 set(BUILD_MIDILIBRARY_ONLY ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
   midifile
@@ -22,7 +15,7 @@ add_library(M01Core
   SaveFile.cpp
 )
 
-target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)
+target_link_libraries(M01Core PRIVATE midifile)
 target_include_directories(M01Core PUBLIC ${midifile_SOURCE_DIR}/include)
 
 target_include_directories(M01Core
