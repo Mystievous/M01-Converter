@@ -3,11 +3,14 @@
 // Creation Date: 5/15/2025
 //
 
-#include "Song.h"
+#include <stdexcept>
+#include <cerrno>
+#include <cstring>
 
-#include "InstrumentHelper.h"
+#include "M01Core/Song.h"
+
+#include "M01Core/InstrumentHelper.h"
 #include "MidiFile.h"
-#include "yaml-cpp/yaml.h"
 
 constexpr int kTicksPerQuarter = 480;
 constexpr int kTicksPerStep = kTicksPerQuarter / 4;
@@ -26,17 +29,27 @@ enum Track
     INST8
 };
 
-Song::Song(FILE* saveFile, const SongIdentifier& identifier) : identifier(identifier),
+Song::Song(FILE *saveFile, const SongIdentifier &identifier) : identifier(identifier),
                                                                header({})
 {
-    fseek(saveFile, static_cast<long>(identifier.songStartAddress), SEEK_SET);
+    if (fseek(saveFile, static_cast<long>(identifier.songStartAddress), SEEK_SET) != 0)
+    {
+        throw std::runtime_error(std::string("fseek failed: ") + std::strerror(errno));
+    }
 
-    fread(&header, sizeof(SongHeader), 1, saveFile);
+    size_t readCount = fread(&header, sizeof(SongHeader), 1, saveFile);
+    if (readCount != 1)
+    {
+        if (feof(saveFile))
+            throw std::runtime_error("Unexpected EOF while reading SongHeader");
+        else
+            throw std::runtime_error(std::string("fread failed: ") + std::strerror(errno));
+    }
 
+    measures.reserve(kNumberOfMeasures);
     for (int i = 0; i < kNumberOfMeasures; ++i)
     {
-        Measure measure(saveFile);
-        measures.push_back(measure);
+        measures.emplace_back(saveFile);
     }
 }
 
@@ -57,9 +70,9 @@ int Song::TicksToSwing(const int ticks) const
     }
 }
 
-smf::MidiFile& Song::MakeMidiFile() const
+smf::MidiFile &Song::MakeMidiFile() const
 {
-    smf::MidiFile& midiFile = *new smf::MidiFile();
+    smf::MidiFile &midiFile = *new smf::MidiFile();
 
     midiFile.setTicksPerQuarterNote(kTicksPerQuarter);
     midiFile.addTracks(8);
@@ -78,8 +91,8 @@ smf::MidiFile& Song::MakeMidiFile() const
     uint16_t currentTempo = header.masterInfo.tempo;
     for (int i = 0; i < kNumberOfMeasures; i++)
     {
-        const auto& measureInfo = header.measureInfo[i];
-        const auto& measure = measures[i];
+        const auto &measureInfo = header.measureInfo[i];
+        const auto &measure = measures[i];
         if (measureInfo.tempo != 0 && measureInfo.tempo != currentTempo)
         {
             currentTempo = measureInfo.tempo;
@@ -92,16 +105,15 @@ smf::MidiFile& Song::MakeMidiFile() const
         }
         for (int j = 0; j < kNumberOfInstruments; ++j)
         {
-            const auto& trackHeader = measure.trackHeaders[j];
-            const auto& noteData = measure.noteData[j];
+            const auto &trackHeader = measure.trackHeaders[j];
+            const auto &noteData = measure.noteData[j];
 
             for (int k = 0; k < trackHeader.numberOfNotes; ++k)
             {
-                const auto& [length, velocity, noteId, startPoint] = noteData[k];
+                const auto &[length, velocity, noteId, startPoint] = noteData[k];
                 const int startTime = TicksToSwing(startPoint * kTicksPerStep);
                 const int endTime = TicksToSwing((startPoint * 4 + length + 1) * kTicksPerStep / 4) +
-                    cumulativeTickCount
-                    - kNoteEndPadding;
+                                    cumulativeTickCount - kNoteEndPadding;
 
                 midiFile.addNoteOn(j + 1, startTime + cumulativeTickCount, j, noteId, velocity * 17 / 2);
                 midiFile.addNoteOff(j + 1, endTime, j, noteId, velocity * 17 / 2);
@@ -133,21 +145,12 @@ smf::MidiFile& Song::MakeMidiFile() const
     return midiFile;
 }
 
-smf::MidiFile& Song::MakeExtendedMidiFile(const std::string& configPath) const
+smf::MidiFile &Song::MakeExtendedMidiFile(const std::string &configPath) const
 {
-    bool configLoaded = true;
-    YAML::Node config;
-    try
-    {
-        config = YAML::LoadFile(configPath);
-    }
-    catch (...)
-    {
-        std::cerr << "Error: Could not load config file, ignoring: " << configPath << std::endl;
-        configLoaded = false;
-    }
-    smf::MidiFile& midiFile = *new smf::MidiFile();
+    InstrumentHelper instrumentHelper;
+    instrumentHelper.LoadConfigFile(configPath);
 
+    smf::MidiFile &midiFile = *new smf::MidiFile();
 
     midiFile.setTicksPerQuarterNote(kTicksPerQuarter);
     midiFile.addTracks(8);
@@ -158,111 +161,102 @@ smf::MidiFile& Song::MakeExtendedMidiFile(const std::string& configPath) const
 
     // Initialize Instrument Tracks and Info
     InstrumentPlaybackInfo instrumentPlaybackInfo[kNumberOfInstruments];
-    YAML::Node instrumentConfigs[kNumberOfInstruments];
+    InstrumentConfig instrumentConfigs[kNumberOfInstruments];
     for (int i = 0; i < kNumberOfInstruments; ++i)
     {
         // midiFile.addTrackName(i + 1, 0, "Track-" + std::to_string(i));
-        const auto& instrument = header.instruments[i];
-        const auto& [bank, subBank, program] = instrumentHelper.GetInstrumentName(
+        const auto &instrument = header.instruments[i];
+        const auto &[bank, subBank, program] = instrumentHelper.GetInstrumentName(
             instrument.bank,
             instrument.subBank,
-            instrument.program
-        );
+            instrument.program);
 
         instrumentPlaybackInfo[i].track = i + 1;
         instrumentPlaybackInfo[i].channel = i;
 
-        if (configLoaded)
+        instrumentConfigs[i] = instrumentHelper.GetInstrumentConfig(bank, subBank, program);
+
+        if (instrumentConfigs[i].channel.has_value())
         {
-            instrumentConfigs[i] = InstrumentHelper::GetInstrumentConfig(config, bank, subBank, program);
-
-            if (instrumentConfigs[i]["channel"])
-            {
-                instrumentPlaybackInfo[i].channel = instrumentConfigs[i]["channel"].as<uint8_t>();
-            }
-
-            if (instrumentConfigs[i]["bank"])
-            {
-                instrumentPlaybackInfo[i].bank = instrumentConfigs[i]["bank"].as<uint8_t>();
-            }
-            else
-            {
-                instrumentPlaybackInfo[i].bank = 0;
-            }
-
-            if (instrumentConfigs[i]["subBank"])
-            {
-                instrumentPlaybackInfo[i].subBank = instrumentConfigs[i]["subBank"].as<uint8_t>();
-            }
-            else
-            {
-                instrumentPlaybackInfo[i].bank = 0;
-            }
-
-            if (instrumentConfigs[i]["program"])
-            {
-                instrumentPlaybackInfo[i].program = instrumentConfigs[i]["program"].as<uint8_t>();
-            }
-
-            const auto& info = instrumentPlaybackInfo[i];
-            std::string name = bank;
-            name += " - ";
-            name += program;
-
-            midiFile.addTrackName(info.track, 0, name);
-            midiFile.addController(
-                info.track,
-                0,
-                info.channel,
-                0x00,
-                instrumentPlaybackInfo[i].bank
-            );
-            midiFile.addController(
-                info.track,
-                0,
-                info.channel,
-                0x20,
-                instrumentPlaybackInfo[i].subBank
-            );
-            midiFile.addPatchChange(info.track, 0, info.channel, info.program);
-
-            // CC Pan: DS Save File stores pan as -5 to 5.
-            midiFile.addController(
-                info.track,
-                0,
-                info.channel,
-                0x0A,
-                InstrumentHelper::MapRange(instrument.panning, -5, 5, 0, 127)
-            );
-            // CC Volume: DS Save File stores volume as 0 to 127.
-            midiFile.addController(info.track, 0, info.channel, 0x07, instrument.volume);
-
-            // CC Attack: DS Save File stores attack as 0 to 15.
-            midiFile.addController(
-                info.track,
-                0,
-                info.channel,
-                0x49,
-                InstrumentHelper::MapRange(instrument.attack, 0, 15, 0, 127)
-            );
-
-            // CC Release: DS Save File stores release as 0 to 15.
-            midiFile.addController(
-                info.track,
-                0,
-                info.channel,
-                0x48,
-                InstrumentHelper::MapRange(instrument.release, 0, 15, 0, 127)
-            );
+            instrumentPlaybackInfo[i].channel = instrumentConfigs[i].channel.value();
         }
+
+        if (instrumentConfigs[i].bank.has_value())
+        {
+            instrumentPlaybackInfo[i].bank = instrumentConfigs[i].bank.value();
+        }
+        else
+        {
+            instrumentPlaybackInfo[i].bank = 0;
+        }
+
+        if (instrumentConfigs[i].subBank.has_value())
+        {
+            instrumentPlaybackInfo[i].subBank = instrumentConfigs[i].subBank.value();
+        }
+        else
+        {
+            instrumentPlaybackInfo[i].subBank = 0;
+        }
+
+        if (instrumentConfigs[i].program.has_value())
+        {
+            instrumentPlaybackInfo[i].program = instrumentConfigs[i].program.value();
+        }
+
+        const auto &info = instrumentPlaybackInfo[i];
+        std::string name = bank;
+        name += " - ";
+        name += program;
+
+        midiFile.addTrackName(info.track, 0, name);
+        midiFile.addController(
+            info.track,
+            0,
+            info.channel,
+            0x00,
+            instrumentPlaybackInfo[i].bank);
+        midiFile.addController(
+            info.track,
+            0,
+            info.channel,
+            0x20,
+            instrumentPlaybackInfo[i].subBank);
+        midiFile.addPatchChange(info.track, 0, info.channel, info.program);
+
+        // CC Pan: DS Save File stores pan as -5 to 5.
+        midiFile.addController(
+            info.track,
+            0,
+            info.channel,
+            0x0A,
+            InstrumentHelper::MapRange(instrument.panning, -5, 5, 0, 127));
+        // CC Volume: DS Save File stores volume as 0 to 127.
+        midiFile.addController(info.track, 0, info.channel, 0x07, instrument.volume);
+
+        // CC Attack: DS Save File stores attack as 0 to 15.
+        midiFile.addController(
+            info.track,
+            0,
+            info.channel,
+            0x49,
+            InstrumentHelper::MapRange(instrument.attack, 0, 15, 0, 127));
+
+        // CC Release: DS Save File stores release as 0 to 15.
+        midiFile.addController(
+            info.track,
+            0,
+            info.channel,
+            0x48,
+            InstrumentHelper::MapRange(instrument.release, 0, 15, 0, 127));
     }
 
     int cumulativeTickCount = 0;
     uint16_t currentTempo = header.masterInfo.tempo;
     for (int i = 0; i < kNumberOfMeasures; i++)
     {
-        const auto& measureInfo = header.measureInfo[i];
-        const auto& measure = measures[i];
+        const auto &measureInfo = header.measureInfo[i];
+        const auto &measure = measures[i];
         if (measureInfo.tempo != 0 && measureInfo.tempo != currentTempo)
         {
             currentTempo = measureInfo.tempo;
@@ -275,19 +269,18 @@ smf::MidiFile& Song::MakeExtendedMidiFile(const std::string& configPath) const
         }
         for (int j = 0; j < kNumberOfInstruments; ++j)
         {
-            const auto& info = instrumentPlaybackInfo[j];
-            const auto& trackHeader = measure.trackHeaders[j];
-            const auto& noteData = measure.noteData[j];
+            const auto &info = instrumentPlaybackInfo[j];
+            const auto &trackHeader = measure.trackHeaders[j];
+            const auto &noteData = measure.noteData[j];
 
             for (int k = 0; k < trackHeader.numberOfNotes; ++k)
             {
-                const auto& [length, velocity, noteId, startPoint] = noteData[k];
+                const auto &[length, velocity, noteId, startPoint] = noteData[k];
                 const int startTime = TicksToSwing(startPoint * kTicksPerStep);
                 const int endTime = TicksToSwing((startPoint * 4 + length + 1) * kTicksPerStep / 4) +
-                    cumulativeTickCount
-                    - kNoteEndPadding;
+                                    cumulativeTickCount - kNoteEndPadding;
 
-                const uint8_t& remappedNoteId = InstrumentHelper::RemapNoteNumber(instrumentConfigs[j], noteId);
+                const uint8_t &remappedNoteId = InstrumentHelper::RemapNoteNumber(instrumentConfigs[j], noteId);
 
                 midiFile.addNoteOn(info.track, startTime + cumulativeTickCount, info.channel, remappedNoteId,
                                    velocity * 17 / 2);

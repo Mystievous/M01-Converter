@@ -5,14 +5,8 @@
 
 #include <filesystem>
 #include <iostream>
-#include <SaveFile.h>
-
-#include "SaveStructure.h"
-#include "Song.h"
-#include "MidiFile.h"
 #include "cxxopts.hpp"
-
-// constexpr std::string_view kFileSignature = "M01W";
+#include "M01Core/M01Core.h"
 
 int main(const int argc, char **argv)
 {
@@ -54,43 +48,27 @@ int main(const int argc, char **argv)
         }
         FILE *saveFile = fopen(inputPath.c_str(), "rb");
         std::cout << "Opened file: " << inputPath << std::endl;
-        const SaveFile saveData(saveFile);
-        if (!saveData.IsValid())
-        {
-            std::cerr << "Error: Invalid save file." << std::endl;
-            fclose(saveFile);
-            return 1;
-        }
-        std::cout << "Found " << saveData.GetNumberOfSongs() << " songs." << std::endl;
-        fclose(saveFile);
+        // Use the M01Core library API
+        const bool extendedMode = result.count("extended") != 0;
+        const std::string configPath = result.count("config") ? result["config"].as<std::string>() : std::string("config.yml");
 
-        if (result.count("extended"))
+        auto results = M01Core::ConvertSaveFile(inputPath, extendedMode, configPath);
+        std::cout << "Found " << results.size() << " songs." << std::endl;
+
+        for (const auto &r : results)
         {
-            for (const auto &song : saveData.GetSongs())
+            if (extendedMode)
             {
-                std::cout << "Making extended MIDI file for: " << song.identifier.name << ".mid" << std::endl;
-                if (result.count("config"))
-                {
-                    auto &midiFile = song.MakeExtendedMidiFile(result["config"].as<std::string>());
-                    std::string filename = song.identifier.name;
-                    midiFile.write(filename + ".mid");
-                }
-                else
-                {
-                    auto &midiFile = song.MakeExtendedMidiFile();
-                    std::string filename = song.identifier.name;
-                    midiFile.write(filename + ".mid");
-                }
+                std::cout << "Making extended MIDI file for: " << r.name << ".mid" << std::endl;
             }
-        }
-        else
-        {
-            for (const auto &song : saveData.GetSongs())
+            else
             {
-                std::cout << "Making MIDI file for: " << song.identifier.name << ".mid" << std::endl;
-                auto &midiFile = song.MakeMidiFile();
-                std::string filename = song.identifier.name;
-                midiFile.write(filename + ".mid");
+                std::cout << "Making MIDI file for: " << r.name << ".mid" << std::endl;
+            }
+            if (r.midi)
+            {
+                r.midi->write(r.name + ".mid");
+                delete r.midi;
             }
         }
     }

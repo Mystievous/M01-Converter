@@ -23,8 +23,6 @@ struct InstrumentPlaybackInfo
 class Song
 {
 public:
-    InstrumentHelper instrumentHelper;
-
     SongIdentifier identifier;
     SongHeader header;
     std::vector<Measure> measures;
