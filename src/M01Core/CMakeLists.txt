@@ -22,9 +22,7 @@ add_library(M01Core
   SaveFile.cpp
 )
 
-target_link_libraries(M01Core PUBLIC yaml-cpp::yaml-cpp)
-
-target_link_libraries(M01Core PRIVATE midifile)
+target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)
 target_include_directories(M01Core PUBLIC ${midifile_SOURCE_DIR}/include)
 
 target_include_directories(M01Core

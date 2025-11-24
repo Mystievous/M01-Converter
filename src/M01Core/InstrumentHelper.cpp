@@ -9,6 +9,8 @@
 #include <ranges>
 #include <utility>
 
+#include <yaml-cpp/yaml.h>
+
 const InstrumentMap defaultMap = {
     {"M1", {
                {"Keyboard", {"Piano", "E.Piano1", "E.Piano2", "E.Piano3", "Clav", "Harpsicord", "Organ1", "Organ2", "MagicOrgan", "DW-Piano", "DW-EP1", "DW-EP2", "DW-EP3", "DW-Clav", "DW-Organ1", "DW-Organ2"}},
@@ -141,45 +143,127 @@ InstrumentIds InstrumentHelper::GetProgramChangeIds(const std::string &instrumen
     return {};
 }
 
-YAML::Node InstrumentHelper::GetInstrumentConfig(const YAML::Node &config, const uint8_t &bankId,
-                                                 const uint8_t &subBankId, const uint8_t &programId) const
+void InstrumentHelper::LoadConfigFile(const std::string &configPath)
+{
+    config_.clear();
+    configLoaded_ = false;
+
+    try
+    {
+        YAML::Node root = YAML::LoadFile(configPath);
+        if (!root["Instruments"])
+            return;
+
+        YAML::Node instruments = root["Instruments"];
+        for (auto itBank = instruments.begin(); itBank != instruments.end(); ++itBank)
+        {
+            const std::string &bankName = itBank->first.as<std::string>();
+            YAML::Node bankNode = itBank->second;
+
+            for (auto itSub = bankNode.begin(); itSub != bankNode.end(); ++itSub)
+            {
+                const std::string subBankName = itSub->first.as<std::string>();
+                YAML::Node subNode = itSub->second;
+
+                for (auto itProg = subNode.begin(); itProg != subNode.end(); ++itProg)
+                {
+                    const std::string programName = itProg->first.as<std::string>();
+                    YAML::Node progNode = itProg->second;
+
+                    InstrumentConfig cfg;
+
+                    if (progNode["program"])
+                        cfg.program = static_cast<uint8_t>(progNode["program"].as<int>());
+
+                    if (progNode["channel"])
+                        cfg.channel = static_cast<uint8_t>(progNode["channel"].as<int>());
+
+                    if (progNode["transposition"])
+                        cfg.transposition = progNode["transposition"].as<int>();
+
+                    if (progNode["map"])
+                    {
+                        if (progNode["map"].IsSequence())
+                        {
+                            std::vector<uint8_t> seq;
+                            for (const auto &v : progNode["map"])
+                            {
+                                seq.push_back(static_cast<uint8_t>(v.as<int>()));
+                            }
+                            cfg.mapList = std::move(seq);
+                        }
+                        else if (progNode["map"].IsMap())
+                        {
+                            std::map<int, uint8_t> mp;
+                            for (auto it = progNode["map"].begin(); it != progNode["map"].end(); ++it)
+                            {
+                                int key = it->first.as<int>();
+                                uint8_t val = static_cast<uint8_t>(it->second.as<int>());
+                                mp.emplace(key, val);
+                            }
+                            cfg.mapDict = std::move(mp);
+                        }
+                    }
+
+                    config_[bankName][subBankName][programName] = std::move(cfg);
+                }
+            }
+        }
+
+        configLoaded_ = true;
+    }
+    catch (const std::exception &)
+    {
+        configLoaded_ = false;
+    }
+}
+
+InstrumentConfig InstrumentHelper::GetInstrumentConfig(const std::string &bankName,
+                                                       const std::string &subBankName,
+                                                       const std::string &programName) const
+{
+    InstrumentConfig empty;
+    if (!configLoaded_)
+        return empty;
+
+    auto itBank = config_.find(bankName);
+    if (itBank == config_.end())
+        return empty;
+
+    auto itSub = itBank->second.find(subBankName);
+    if (itSub == itBank->second.end())
+        return empty;
+
+    auto itProg = itSub->second.find(programName);
+    if (itProg == itSub->second.end())
+        return empty;
+
+    return itProg->second;
+}
+
+InstrumentConfig InstrumentHelper::GetInstrumentConfig(const uint8_t &bankId,
+                                                       const uint8_t &subBankId,
+                                                       const uint8_t &programId) const
 {
     const auto &[bank, subBank, program] = GetInstrumentName(bankId, subBankId, programId);
-    return GetInstrumentConfig(config, bank, subBank, program);
+    return GetInstrumentConfig(bank, subBank, program);
 }
 
-YAML::Node InstrumentHelper::GetInstrumentConfig(const YAML::Node &config, const std::string &bankName,
-                                                 const std::string &subBankName, const std::string &programName)
-{
-    if (!config["Instruments"][bankName] || !config["Instruments"][bankName].IsMap())
-        return {};
-    const auto &bankConfig = config["Instruments"][bankName];
-
-    if (!bankConfig[subBankName] || !bankConfig[subBankName].IsMap())
-        return {};
-    const auto &subBankConfig = bankConfig[subBankName];
-
-    if (!subBankConfig[programName] || !subBankConfig[programName].IsMap())
-        return {};
-    const auto &programConfig = subBankConfig[programName];
-
-    return programConfig;
-}
-
-uint8_t InstrumentHelper::RemapNoteNumber(const YAML::Node &instrumentConfig, const uint8_t &noteNumber)
+uint8_t InstrumentHelper::RemapNoteNumber(const InstrumentConfig &instrumentConfig, const uint8_t &noteNumber)
 {
     uint8_t realNoteNumber = noteNumber - kNoteOffset;
 
-    if (instrumentConfig["transposition"])
+    if (instrumentConfig.transposition.has_value())
     {
-        realNoteNumber = std::max(0, std::min(127, realNoteNumber + instrumentConfig["transposition"].as<int>()));
+        realNoteNumber = std::max(0, std::min(127, realNoteNumber + instrumentConfig.transposition.value()));
     }
 
-    if (!instrumentConfig["map"] || !(instrumentConfig["map"].IsSequence() || instrumentConfig["map"].IsMap()))
+    if (!instrumentConfig.mapList.has_value() && !instrumentConfig.mapDict.has_value())
         return realNoteNumber;
 
-    if (instrumentConfig["map"].IsSequence())
+    if (instrumentConfig.mapList.has_value())
     {
+        const auto &list = *instrumentConfig.mapList;
         if (realNoteNumber < kDrumLowestNote || realNoteNumber >= kDrumLowestNote + kNumberOfDrumNotes)
         {
             return realNoteNumber;
@@ -187,19 +271,20 @@ uint8_t InstrumentHelper::RemapNoteNumber(const YAML::Node &instrumentConfig, co
 
         const int index = (kNumberOfDrumNotes - 1) - (realNoteNumber - kDrumLowestNote);
 
-        if (index < 0 || index >= instrumentConfig["map"].size())
+        if (index < 0 || index >= list.size())
             return realNoteNumber;
 
-        return instrumentConfig["map"][index].as<uint8_t>();
+        return list.at(index);
     }
 
-    if (instrumentConfig["map"].IsMap())
+    else if (instrumentConfig.mapDict.has_value())
     {
-        if (!instrumentConfig["map"][realNoteNumber])
+        const auto &dict = *instrumentConfig.mapDict;
+        if (!dict.contains(realNoteNumber))
         {
             return realNoteNumber;
         }
-        return instrumentConfig["map"][realNoteNumber].as<uint8_t>();
+        return dict.at(realNoteNumber);
     }
 
     return realNoteNumber;

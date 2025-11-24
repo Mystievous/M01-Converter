@@ -1,3 +1,8 @@
+//
+// Author: Mystievous <mystievous@starseekstudios.com>
+// Creation Date: 11/23/2025
+//
+
 #include "M01Core/M01Core.h"
 #include <stdexcept>
 #include <filesystem>
