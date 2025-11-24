@@ -20,4 +20,6 @@ namespace M01Core
     // Throws std::runtime_error on I/O/format errors.
     std::vector<ConversionResult> ConvertSaveFile(const std::string &path, bool extended = false, const std::string &configPath = "config.yml");
 
+    std::vector<ConversionResult> ConvertSaveFileFromFILE(FILE *file, bool extended = false, const std::string &configPath = "config.yml");
+
 } // namespace M01Core

@@ -24,11 +24,18 @@ namespace M01Core
             throw std::runtime_error("Could not open file: " + path);
         }
 
-        SaveFile save(f);
+        std::vector<ConversionResult> results = ConvertSaveFileFromFILE(f, extended, configPath);
+
+        fclose(f);
+        return results;
+    }
+
+    std::vector<ConversionResult> ConvertSaveFileFromFILE(FILE *file, bool extended, const std::string &configPath)
+    {
+        SaveFile save(file);
         if (!save.IsValid())
         {
-            fclose(f);
-            throw std::runtime_error("Invalid save file: " + path);
+            return {};
         }
 
         std::vector<ConversionResult> results;
@@ -46,8 +53,6 @@ namespace M01Core
             }
             results.push_back(r);
         }
-
-        fclose(f);
         return results;
     }
 
