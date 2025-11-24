@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "M01Core/SaveFile.h"
+#include "SaveFile.h"
 #include "MidiFile.h"
 
 namespace M01Core

@@ -6,4 +6,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Top-level orchestrator only: add the subprojects.
 add_subdirectory(src/M01Core)
-add_subdirectory(src/M01Converter)
+add_subdirectory(src/M01-Converter)
