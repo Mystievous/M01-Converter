@@ -1,3 +1,11 @@
+#include <std/mem.pat>
+#include <std/sys.pat>
+#include <std/io.pat>
+
+#pragma loop_limit 1000000
+
+bool VALIDATE_CHECKSUMS = true;
+
 enum M1Keyboard : u8 {
     Piano, EPiano1, EPiano2, EPiano3, Clav, Harpsicord, Organ1, Organ2, MagicOrgan, DWPiano, DWEP1, DWEP2, DWEP3, DWClav, DWOrgan1, DWOrgan2
 };
@@ -19,7 +27,7 @@ enum M1BrassReed : u8 {
 };
 
 enum M1LeadSynth : u8 {
-    Wire, SawWave, SquareWave, 
+    Wire, SawWave, SquareWave,
     QuarterPulse, // 25%Pulse
     TenthPulse, // 10%Pulse
     DWTri, DWSine, VoiceWave, DWVoice
@@ -64,7 +72,7 @@ enum K01WBrassReed : u8 {
 };
 
 enum K01WLeadSynth : u8 {
-    MonoLead, MiniLead, VS89, 
+    MonoLead, MiniLead, VS89,
     FourPulse, // 4%Pulse
     SynSine, Sine
 };
@@ -136,22 +144,45 @@ enum SubBank : u8 {
     Keyboard, GuitarMallet, Bass, StringsPad, BrassReed, LeadSynth, PolySynth, SeOther, HitChord, DrumKit
 };
 
+enum KaosMode : u8 {
+    MONO, CHD2, CHD3, CHD4, DRUM
+};
 
-bitfield PlaybackState {
-    hasFX : 1 [[color("00ddff")]];
+enum Scale : u8 {
+    CHROMA, IONIAN, DORIAN, PHRYGI, LYDIAN, MIXLYD, AEOLIA, LOCRIA, MBLUES, mBLUES, DIM, COMDIM, MPENTA, mPENTA, RAGA1, RAGA2, ARABIA, SPAIN, GYPSY, EGYPT, HAWAII, PELOG, JAPAN, RYUKYU, WHOLE, m3RD, M3RD, FOURTH, FIFTH, OCTAVE
+};
+
+enum DrumPattern : u8 {
+    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL, DandB, RandB, HIPHOP, PERC
+};
+
+bitfield PlaybackBitfield {
+    hasFX : 1 [[color("ff00ff")]];
     muted : 1 [[color("ff0000")]];
     soloed : 1 [[color("ffff00")]];
+    kaosKey : 5 [[color("00ffff")]];
+};
+
+struct PlaybackState {
+    PlaybackBitfield playbackBitfield [[color("ffff00")]];
+    Scale kaosScale [[color("018500")]];
+    DrumPattern kaosDrumPattern [[color("004E85")]];
+    KaosMode kaosMode [[color("BD3600")]];
+    u8 keyboardOctave [[color("65F7B3")]];
+    u8 unknown01[0x01] [[color("404040")]];
+};
+
+bitfield DrumSampleMix {
+    level   : 4 [[color("ff9178")]];
+    panning : 4 [[color("ff00ff")]];
 };
 
 struct DrumInfo {
-    u8 level [[color("ff9178")]];
+    DrumSampleMix mix;
     s8 timestretch [[color("f6ff78")]];
-    s8 panning [[color("ff00ff")]];
 };
 
-
 struct Instrument {
-    padding[0x08];
     Bank bank [[color("dd00ff")]];
     SubBank subBank [[color("ff8000")]];
     match (bank) {
@@ -204,21 +235,28 @@ struct Instrument {
             u8 program [[color("ffff00")]];
         }
     }
-    padding[0x02];
-    u8 attack [[color("2bff00")]];
-    u8 release [[color("00ffd9")]];
-    u8 volume [[color("004cff")]];
-    s8 panning [[color("ff00ff")]];
-    PlaybackState playbackState [[color("ffff00")]]; 
-    padding[0x05];
-    DrumInfo drumInfo[8];
-    padding[0x09];
+    KaosMode kaosMode [[color("BD3600")]]; // Copy of the one in the PlaybackState if
+    s8 kaosVariation [[color("850018")]];
+    u8 attack [[color("2bff00")]]; // MIDI CC: 73
+    u8 release [[color("00ffd9")]]; // MIDI CC: 72
+    u8 volume [[color("004cff")]]; // MIDI CC: 7
+    s8 panning [[color("ff00ff")]]; // MIDI CC: 10
+    PlaybackState playbackState [[color("ffff00")]];
+    std::assert(
+        (playbackState.kaosMode == KaosMode::DRUM) ||
+        (playbackState.kaosMode == kaosMode),
+                std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, subBank, program, kaosMode, playbackState.kaosMode)
+    );
+    // 12 drum samples, each with parameters
+    DrumInfo drumInfo[12];
+    u8 unknown03[0x11] [[color("404040")]];
 };
 
 
 
 bitfield PlaybackInfo {
     hasSolo : 1;
+    unknown01 : 7;
 };
 
 enum ReverbType : u8 {
@@ -239,25 +277,29 @@ struct DelayInfo {
     s8 panRatio [[color("ff00ff")]];
     u8 feedback [[color("ff4400")]];
     u8 level [[color("ff9178")]];
-    padding[3];
 };
 
 bitfield SceneState {
     reverbOn : 1;
-    padding : 1;
+    unknown01 : 1;
     sceneLocked : 1;
+    swing : 8;
+    unknown02 : 5;
 };
 
 struct MasterInfo {
+    u8 numTracks [[color("D837DB")]];
+    u8 numMeasures [[color("DB37A4")]];
     u16 tempo [[color("00ff08")]];
     u8 swing [[color("c371f0")]];
     u8 step [[color("ff8400")]];
+    u8 unknown02[0x02] [[color("404040")]];
 };
 
 struct MeasureInfo {
     u16 tempo [[color("00ff08")]];
     u8 step [[color("ff8400")]];
-    padding[5];
+    u8 unknown01[0x05] [[color("404040")]];
 };
 
 fn offsetNote(u8 value) {
@@ -271,53 +313,133 @@ struct NoteData {
     u8 startPoint [[color("ff0000")]];
 };
 
-struct BlockInfo {
-    padding[1];
-    padding[1];
-    u8 blockLength [[color("c9c9c9")]];
-    padding[1];
-};
-
-struct TrackData {
-    BlockInfo blockInfo;
+struct PatternData {
     u8 measureNumber [[color("ff6600")]];
     u8 trackNumber [[color("ffa200")]];
-    u8 numberOfNotes [[color("ffe600")]];
-    padding[1];
+    u16 numberOfNotes [[color("ffe600")]];
     NoteData notes[numberOfNotes];
 };
 
-struct MeasureData {
-    TrackData trackData[8];
+fn sum_range(u128 offsetFrom, u128 offsetTo) {
+    u32 acc = 0;
+    for (u128 i = offsetFrom, i < offsetTo, i = i + 1) {
+        acc = (acc + std::mem::read_unsigned(i, 1)) & 0xFFFFFFFF;
+    }
+    return acc;
 };
 
-struct SongData {
-    Instrument instruments[8];
-    padding[8];
-    PlaybackInfo playbackInfo [[color("bffc56")]];
-    padding[1];
-    padding[2];
-    ReverbInfo reverbInfo;
-    padding[1];
-    DelayInfo delayInfo;
-    SceneState sceneState [[color("fba6ff")]];
-    padding[45];
-    MasterInfo masterInfo;
-    padding[6];
-    MeasureInfo measureInfo[99];
-    MeasureData measureData[99];
-};
-
-struct SongIdentifier {
-    bool songHasData [[color("00ff00")]];
-    char name[8] [[color("ff00ff")]];
-    padding[15];
-    u32 songStartAddress [[color("00ffff")]];
-    u16 songLength [[color("0091ff")]];
-    padding[10];
-    if (songHasData) {
-        SongData song @ songStartAddress;
+struct SongChecksum<auto Start, auto Length> {
+    u32 checksum [[color("B52D1B")]];
+    u32 computed = 0;
+    if (VALIDATE_CHECKSUMS) {
+        computed = sum_range(Start + 4, Start + Length);
+        std::assert_warn(checksum == computed, std::format("Song checksum mismatch at {:04X}:. Stored: {:08X}, Computed: {:08X}", Start, checksum, computed));
     }
 };
 
-SongIdentifier songs[10] @ 0x0C;
+enum Tag : u16 {
+    End = 0x0000,
+    MasterInfo = 0x0201,
+    MeasureInfo = 0x0104,
+    PatternData = 0x0105,
+};
+
+u8 g_numTracks = 0;
+u8 g_numMeasures = 0;
+
+struct Chunk {
+    Tag tag [[color("00FFF4")]];
+    u16 length [[color("c9c9c9")]];
+    u64 start = $;
+    match (tag) {
+        (Tag::MasterInfo): {
+            std::assert_warn(g_numTracks == 0 && g_numMeasures == 0, "found two MasterInfo chunks in one song");
+            MasterInfo masterInfo;
+            g_numTracks = masterInfo.numTracks;
+            g_numMeasures = masterInfo.numMeasures;
+        }
+        (Tag::MeasureInfo): {
+            MeasureInfo measureInfo[length / sizeof(MeasureInfo)];
+            std::assert_warn(g_numMeasures != 0, "MeasureInfo chunk found before MasterInfo");
+            std::assert_warn(g_numMeasures == length / sizeof(MeasureInfo), "mismatched measure number and length");
+        }
+        (Tag::PatternData): {
+            PatternData patternData;
+            std::assert_warn(patternData.trackNumber < g_numTracks, "track number out of range");
+            std::assert_warn(patternData.measureNumber < g_numMeasures, "measure number out of range");
+        }
+        (_): u8 data[length] [[color("0000FF")]];
+    }
+
+    std::assert($ == start + length, std::format("{} chunk at {:04X}: decoded length {}, should be {}", tag, start - 4, $ - start, length));
+
+    if (tag == Tag::End) {
+        break;
+    }
+};
+
+struct SongData<auto Start, auto Length> {
+    g_numTracks = 0;
+    g_numMeasures = 0;
+
+    SongChecksum<Start, Length> checksum;
+    // Similar to the version in the song header, this is always `4` for M01/NDS,
+    // and always `5` for the M01D/3DS.
+    u32 version [[color("c371f0")]];
+    Instrument instruments[8];
+    PlaybackInfo playbackInfo [[color("bffc56")]];
+    u8 unknown01[3] [[color("404040")]];
+    ReverbInfo reverbInfo;
+    u8 unknown02[1] [[color("404040")]];
+    DelayInfo delayInfo;
+    u8 unknown03[3] [[color("404040")]];
+    SceneState sceneState [[color("fba6ff")]];
+    u8 unknown04[22] [[color("404040")]];
+    char songLabel[4] [[color("0091ff")]];
+    std::assert(songLabel == "song", "Song is missing data label");
+    u64 songDataStart = $;
+    u32 songDataLength [[color("c9c9c9")]]; // Includes the length value bytes
+    u32 songDataVersion [[color("c371f0")]];
+    u8 unknown05[4] [[color("404040")]];
+    Chunk chunks[while($ < Start + Length)];
+    std::assert(Start + Length == songDataStart + songDataLength, "mismatch in song length values");
+    std::assert($ == Start + Length, "song data did not end at the right length");
+};
+
+struct SongIdentifier<auto FollowSongs> {
+    bool songHasData [[color("00ff00")]];
+    char name[8] [[color("ff00ff")]];
+    u8 unknown01[0x0F] [[color("404040")]];
+    u32 songStartAddress [[color("00ffff")]];
+    u32 songLength [[color("0091ff")]];
+    u8 unknown02[0x08] [[color("404040")]];
+    if (songHasData && FollowSongs) {
+        SongData<songStartAddress, songLength> song @ songStartAddress;
+    }
+};
+
+fn check_header_sum(u32 stored) {
+    u32 computed = 0;
+    bool valid = false;
+    if (VALIDATE_CHECKSUMS) {
+        // Sum of all bytes from immediately after the checksum u32 until
+        // 0x1C4 (exclusive), which is where the block of \xFF starts.
+        computed = sum_range(0x04, 0x1C4);
+        valid = stored == computed;
+        std::assert_warn(valid, "header checksum mismatch");
+    }
+    return std::format("{:08X} {}", stored, valid ? "(OK)" : (VALIDATE_CHECKSUMS ? std::format("(BAD, want {:08X})", computed) : ""));
+};
+
+using HeaderChecksum = u32 [[format("check_header_sum")]];
+
+HeaderChecksum checksum @ 0x00 [[color("B52D1B")]];
+
+char signature[4] @ 0x04 [[color("0091ff")]];
+std::assert(signature == "M01W", "Not a Korg M01 save file");
+
+// Assuming this is a version tag, as it is always `4` for M01/NDS saves,
+// and always `7` for M01D/3DS saves.
+u32 version @ 0x08 [[color("c371f0")]];
+
+SongIdentifier<true> songs[10] @ 0x0C;
