@@ -14,6 +14,8 @@
 #include <span>
 #include <stdexcept>
 #include <cstdint>
+#include <string>
+#include <string_view>
 
 static_assert(std::endian::native == std::endian::little,
               "M01 save decoding assumes a little-endian host");
@@ -59,6 +61,13 @@ public:
         const auto bytes = data_.subspan(pos_, count);
         pos_ += count;
         return bytes;
+    }
+
+    std::string ReadString(const size_t width)
+    {
+        const auto bytes = ReadBytes(width);
+        const std::string_view view(reinterpret_cast<const char*>(bytes.data()), width);
+        return std::string(view.substr(0, view.find('\0')));
     }
 
     [[nodiscard]] uint32_t SumBytes(const size_t offset, const size_t length) const

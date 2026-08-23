@@ -6,6 +6,10 @@
 #ifndef SAVEFILE_H
 #define SAVEFILE_H
 
+#include <span>
+#include <cstddef>
+
+#include "ByteReader.h"
 #include "Song.h"
 
 class SaveFile
@@ -14,7 +18,7 @@ class SaveFile
     std::vector<Song> songs;
 
 public:
-    explicit SaveFile(FILE *saveFile);
+    explicit SaveFile(std::span<const std::byte> data);
 
     [[nodiscard]] bool IsValid() const;
 
@@ -23,10 +27,14 @@ public:
         return static_cast<int>(songs.size());
     }
 
-    [[nodiscard]] const std::vector<Song> &GetSongs() const
+    [[nodiscard]] const std::vector<Song>& GetSongs() const
     {
         return songs;
     }
 };
+
+static SongIdentifier DecodeSongIdentifier(ByteReader& reader);
+static void DecodeSongData(ByteReader& reader, const SongIdentifier& identifier);
+static bool check_header_version(uint32_t version);
 
 #endif // SAVEFILE_H

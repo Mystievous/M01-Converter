@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.15)
 add_executable(M01-Converter
   main.cpp
         ../../include/M01Core/ByteReader.h
+        ../../include/M01Core/Bits.h
 )
 
 target_include_directories(M01-Converter

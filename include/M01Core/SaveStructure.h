@@ -7,34 +7,35 @@
 #define SAVESTRUCTURE_H
 
 #include <cstdint>
-#include <numeric>
+#include <string>
+#include <string_view>
 
 constexpr int kNumberOfSongs = 10;
 constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
 
-constexpr std::string kKaosModes[] = {
+constexpr std::string_view kKaosModes[] = {
     "MONO", "CHD2", "CHD3", "CHD4", "DRUM"
 };
 
-constexpr std::string kKaosScale[] = {
+constexpr std::string_view kKaosScale[] = {
     "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES", "DIM", "COMDIM",
     "MPENTA", "mPENTA", "RAGA1", "RAGA2", "ARABIA", "SPAIN", "GYPSY", "EGYPT", "HAWAII", "PELOG", "JAPAN", "RYUKYU",
     "WHOLE", "m3RD", "M3RD", "FOURTH", "FIFTH", "OCTAVE"
 };
 
-constexpr std::string kKaosDrumPattern[] = {
+constexpr std::string_view kKaosDrumPattern[] = {
     "EIGHT_BEAT1", "EIGHT_BEAT2", "SIXTEEN_BEAT1", "SIXTEEN_BEAT2", "ROCK1", "ROCK2", "ROCK3", "FUNK", "HOUSE1",
     "HOUSE2", "ELECTRO", "MINIMAL", "DandB", "RandB", "HIPHOP", "PERC"
 };
 
-struct PlaybackBitfield
+struct PlaybackFlags
 {
-    uint8_t hasFX : 1;
-    uint8_t muted : 1;
-    uint8_t soloed : 1;
-    uint8_t kaosKey : 5;
-} __attribute__((packed));
+    bool hasFX = false;
+    bool muted = false;
+    bool soloed = false;
+    uint8_t kaosKey = 0;
+};
 
 struct DrumInfo
 {
@@ -54,7 +55,7 @@ struct Instrument
     uint8_t release;
     uint8_t volume;
     int8_t panning;
-    PlaybackBitfield playbackState;
+    PlaybackFlags playbackState;
     uint8_t _3[0x05];
     DrumInfo drumInfo[8];
     uint8_t _4[0x09];
@@ -84,10 +85,10 @@ struct DelayInfo
 
 struct SceneState
 {
-    uint8_t reverbOn : 1;
-    uint8_t padding : 1;
-    uint8_t sceneLocked : 1;
-} __attribute__((packed));
+    bool reverbOn = false;
+    bool sceneLocked = false;
+    uint8_t swing = 0;
+};
 
 struct MasterInfo
 {
@@ -146,19 +147,16 @@ struct SongHeader
 struct SongIdentifier
 {
     bool songHasData;
-    char name[0x08];
-    uint8_t _1[0x0F];
+    std::string name;
     uint32_t songStartAddress;
-    uint16_t songLength;
-    uint8_t _2[0x0A];
-} __attribute__((packed));
+    uint32_t songLength;
+};
 
-struct FileHeader
+struct SaveHeader
 {
-    uint32_t checksum;
-    char signature[0x04];
-    uint32_t version;
-    SongIdentifier songIdentifiers[kNumberOfSongs];
-} __attribute__((packed));
+    const uint32_t checksum;
+    const std::string signature; // "M01W"
+    const uint32_t version;
+};
 
 #endif //SAVESTRUCTURE_H
