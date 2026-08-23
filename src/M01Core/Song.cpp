@@ -32,18 +32,16 @@ enum Track
 Song::Song(FILE *saveFile, const SongIdentifier &identifier) : identifier(identifier),
                                                                header({})
 {
-    if (fseek(saveFile, static_cast<long>(identifier.songStartAddress), SEEK_SET) != 0)
+    if (fseek(saveFile, identifier.songStartAddress, SEEK_SET) != 0)
     {
         throw std::runtime_error(std::string("fseek failed: ") + std::strerror(errno));
     }
 
-    size_t readCount = fread(&header, sizeof(SongHeader), 1, saveFile);
-    if (readCount != 1)
+    if (const size_t readCount = fread(&header, sizeof(SongHeader), 1, saveFile); readCount != 1)
     {
         if (feof(saveFile))
             throw std::runtime_error("Unexpected EOF while reading SongHeader");
-        else
-            throw std::runtime_error(std::string("fread failed: ") + std::strerror(errno));
+        throw std::runtime_error(std::string("fread failed: ") + std::strerror(errno));
     }
 
     measures.reserve(kNumberOfMeasures);
@@ -58,16 +56,15 @@ int Song::TicksToSwing(const int ticks) const
     const int periodTicks = ticks % (kTicksPerStep * 2);
     const int noteTicks = ticks % kTicksPerStep;
     const int periodStart = ticks - periodTicks;
+
     if (periodTicks < kTicksPerStep)
     {
         const int swingTicks = (noteTicks * (header.masterInfo.swing * 2) + 50) / 100;
         return periodStart + swingTicks;
     }
-    else
-    {
-        const int swingTicks = (noteTicks * ((100 - header.masterInfo.swing) * 2) + 50) / 100;
-        return periodStart + (kTicksPerStep * (header.masterInfo.swing * 2) + 50) / 100 + swingTicks;
-    }
+
+    const int swingTicks = (noteTicks * ((100 - header.masterInfo.swing) * 2) + 50) / 100;
+    return periodStart + (kTicksPerStep * (header.masterInfo.swing * 2) + 50) / 100 + swingTicks;
 }
 
 smf::MidiFile &Song::MakeMidiFile() const

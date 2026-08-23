@@ -7,16 +7,33 @@
 #define SAVESTRUCTURE_H
 
 #include <cstdint>
+#include <numeric>
 
 constexpr int kNumberOfSongs = 10;
 constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
 
-struct PlaybackState
+constexpr std::string kKaosModes[] = {
+    "MONO", "CHD2", "CHD3", "CHD4", "DRUM"
+};
+
+constexpr std::string kKaosScale[] = {
+    "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES", "DIM", "COMDIM",
+    "MPENTA", "mPENTA", "RAGA1", "RAGA2", "ARABIA", "SPAIN", "GYPSY", "EGYPT", "HAWAII", "PELOG", "JAPAN", "RYUKYU",
+    "WHOLE", "m3RD", "M3RD", "FOURTH", "FIFTH", "OCTAVE"
+};
+
+constexpr std::string kKaosDrumPattern[] = {
+    "EIGHT_BEAT1", "EIGHT_BEAT2", "SIXTEEN_BEAT1", "SIXTEEN_BEAT2", "ROCK1", "ROCK2", "ROCK3", "FUNK", "HOUSE1",
+    "HOUSE2", "ELECTRO", "MINIMAL", "DandB", "RandB", "HIPHOP", "PERC"
+};
+
+struct PlaybackBitfield
 {
     uint8_t hasFX : 1;
     uint8_t muted : 1;
     uint8_t soloed : 1;
+    uint8_t kaosKey : 5;
 } __attribute__((packed));
 
 struct DrumInfo
@@ -37,7 +54,7 @@ struct Instrument
     uint8_t release;
     uint8_t volume;
     int8_t panning;
-    PlaybackState playbackState;
+    PlaybackBitfield playbackState;
     uint8_t _3[0x05];
     DrumInfo drumInfo[8];
     uint8_t _4[0x09];
@@ -138,9 +155,9 @@ struct SongIdentifier
 
 struct FileHeader
 {
-    uint8_t _1[0x04];
+    uint32_t checksum;
     char signature[0x04];
-    uint8_t _2[0x04];
+    uint32_t version;
     SongIdentifier songIdentifiers[kNumberOfSongs];
 } __attribute__((packed));
 

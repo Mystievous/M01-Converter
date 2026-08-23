@@ -5,7 +5,7 @@
 
 #ifndef SAVEFILE_H
 #define SAVEFILE_H
-#include "SaveStructure.h"
+
 #include "Song.h"
 
 class SaveFile

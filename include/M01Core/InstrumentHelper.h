@@ -17,7 +17,8 @@ constexpr int kNumberOfSubBanks = 10;
 constexpr std::string kBankNames[] = {
     "M1",
     "01/W",
-    "EX"};
+    "EX"
+};
 
 constexpr std::string kSubBankNames[] = {
     "Keyboard",
@@ -29,7 +30,8 @@ constexpr std::string kSubBankNames[] = {
     "Poly Synth",
     "SE/Other",
     "Hit/Chord",
-    "Drum Kit"};
+    "Drum Kit"
+};
 
 struct InstrumentName
 {
@@ -68,22 +70,22 @@ public:
 
     [[nodiscard]] InstrumentName GetInstrumentName(uint8_t bankId, uint8_t subBankId, uint8_t programId) const;
 
-    [[nodiscard]] InstrumentIds GetProgramChangeIds(const std::string &instrumentName) const;
+    [[nodiscard]] InstrumentIds GetProgramChangeIds(const std::string& instrumentName) const;
 
-    void LoadConfigFile(const std::string &configPath);
+    void LoadConfigFile(const std::string& configPath);
 
-    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const uint8_t &bankId,
-                                                       const uint8_t &subBankId,
-                                                       const uint8_t &programId) const;
+    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const uint8_t& bankId,
+                                                       const uint8_t& subBankId,
+                                                       const uint8_t& programId) const;
 
-    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string &bankName,
-                                                       const std::string &subBankName,
-                                                       const std::string &programName) const;
+    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string& bankName,
+                                                       const std::string& subBankName,
+                                                       const std::string& programName) const;
 
-    static uint8_t RemapNoteNumber(const InstrumentConfig &instrumentConfig, const uint8_t &noteNumber);
+    static uint8_t RemapNoteNumber(const InstrumentConfig& instrumentConfig, const uint8_t& noteNumber);
 
-    static uint8_t MapRange(const long &value, const long &min, const long &max, const long &newMin,
-                            const long &newMax);
+    static uint8_t MapRange(const long& value, const long& min, const long& max, const long& newMin,
+                            const long& newMax);
 
 private:
     using ConfigTree = std::map<std::string, std::map<std::string, std::map<std::string, InstrumentConfig>>>;

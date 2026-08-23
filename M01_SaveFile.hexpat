@@ -245,7 +245,7 @@ struct Instrument {
     std::assert(
         (playbackState.kaosMode == KaosMode::DRUM) ||
         (playbackState.kaosMode == kaosMode),
-                std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, subBank, program, kaosMode, playbackState.kaosMode)
+        std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, subBank, program, kaosMode, playbackState.kaosMode)
     );
     // 12 drum samples, each with parameters
     DrumInfo drumInfo[12];
@@ -424,22 +424,36 @@ fn check_header_sum(u32 stored) {
     if (VALIDATE_CHECKSUMS) {
         // Sum of all bytes from immediately after the checksum u32 until
         // 0x1C4 (exclusive), which is where the block of \xFF starts.
-        computed = sum_range(0x04, 0x1C4);
+        computed = sum_range($ + 0x04, $ + 0x1C4);
         valid = stored == computed;
         std::assert_warn(valid, "header checksum mismatch");
     }
     return std::format("{:08X} {}", stored, valid ? "(OK)" : (VALIDATE_CHECKSUMS ? std::format("(BAD, want {:08X})", computed) : ""));
 };
-
 using HeaderChecksum = u32 [[format("check_header_sum")]];
 
-HeaderChecksum checksum @ 0x00 [[color("B52D1B")]];
+struct Header<auto ValidateChecksum, auto FollowSongs> {
+    if (ValidateChecksum) {
+        HeaderChecksum checksum [[color("B52D1B")]];
+    } else {
+        u32 checksum [[color("871E10")]];
+    }
+    char signature[4] [[color("0091ff")]];
+    std::assert(signature == "M01W", "Not a Korg M01 save file");
+    // always `4` for M01/NDS saves, and always `7` for M01D/3DS saves.
+    u32 version [[color("c371f0")]];
 
-char signature[4] @ 0x04 [[color("0091ff")]];
-std::assert(signature == "M01W", "Not a Korg M01 save file");
+    SongIdentifier<FollowSongs> songs[10];
 
-// Assuming this is a version tag, as it is always `4` for M01/NDS saves,
-// and always `7` for M01D/3DS saves.
-u32 version @ 0x08 [[color("c371f0")]];
+    // There's the exact amount of space needed for an "11th" song, but
+    // none in game. I'm assuming it's an unused slot.
+    SongIdentifier<false> unusedSlot;
+};
 
-SongIdentifier<true> songs[10] @ 0x0C;
+Header<true, true> header @ 0x00;
+
+// This is an almost direct copy of the header. Likely as a backup if the first one gets messed up.
+//
+// The only difference is that sometimes the checksum field reads ascii "BFBA", the same string that
+// shows up right before the start of the song data range.
+Header<false, false> copyHeader @ 0x0204;
