@@ -76,10 +76,12 @@ struct SceneState
 
 struct MasterInfo
 {
-    uint16_t tempo;
-    uint8_t swing;
-    uint8_t step;
-} __attribute__((packed));
+    uint8_t numTracks = 0;
+    uint8_t numMeasures = 0;
+    uint16_t tempo = 0;
+    uint8_t swing = 0;
+    uint8_t step = 0;
+};
 
 struct MeasureInfo
 {
