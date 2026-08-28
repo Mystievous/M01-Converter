@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "M01Core/SongDecoder.h"
 #include "M01Core/ByteReader.h"
 
 constexpr std::string_view kFileSignature = "M01W";
@@ -40,30 +41,6 @@ static SongIdentifier DecodeSongIdentifier(ByteReader& reader)
         .songStartAddress = songStartAddress,
         .songLength = songLength
     };
-}
-
-static void DecodeSongData(ByteReader& reader, const SongIdentifier& identifier)
-{
-    reader.Seek(identifier.songStartAddress);
-    const auto songChecksum = reader.Read<uint32_t>();
-
-    const auto calculatedChecksum = reader.SumBytes(identifier.songStartAddress + 0x04,
-                                                    identifier.songLength - 0x04);
-    if (songChecksum != calculatedChecksum)
-    {
-        std::cerr << std::hex << "Song checksum mismatch for " << identifier.name << ". Expected: `\\x" <<
-            songChecksum << "`, Calculated: `\\x" << calculatedChecksum << "`." << std::dec << std::endl;
-    }
-
-    const auto songVersion = reader.Read<uint32_t>();
-    reader.Skip(0x1E8);
-    if (const auto label = reader.ReadString(4); label != "song")
-    {
-        std::cerr << "Song label is not `song`, instead: " << label << std::endl;
-    }
-    const auto songDataLength = reader.Read<uint32_t>();
-    const auto songDataVersion = reader.Read<uint32_t>();
-    reader.Skip(4);
 }
 
 static bool check_header_version(const uint32_t version)

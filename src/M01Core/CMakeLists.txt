@@ -21,6 +21,8 @@ add_library(M01Core
         InstrumentHelper.cpp
         SaveFile.cpp
         FileBytes.cpp
+        SongDecoder.cpp
+        ../../include/M01Core/SongDecoder.h
 )
 
 target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)

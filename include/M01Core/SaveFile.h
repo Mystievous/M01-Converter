@@ -33,8 +33,4 @@ public:
     }
 };
 
-static SongIdentifier DecodeSongIdentifier(ByteReader& reader);
-static void DecodeSongData(ByteReader& reader, const SongIdentifier& identifier);
-static bool check_header_version(uint32_t version);
-
 #endif // SAVEFILE_H
