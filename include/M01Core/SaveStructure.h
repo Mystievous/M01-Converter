@@ -87,8 +87,7 @@ struct MeasureInfo
 {
     uint16_t tempo;
     uint8_t step;
-    uint8_t _1[0x05];
-} __attribute__((packed));
+};
 
 struct NoteData
 {

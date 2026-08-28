@@ -7,6 +7,7 @@
 
 #include <string>
 #include <string_view>
+#include <format>
 #include <iostream>
 #include <algorithm>
 #include <cstdint>
@@ -64,15 +65,16 @@ SaveFile::SaveFile(std::span<const std::byte> data)
     if (const auto sum = reader.SumBytes(0x04, 0x1C4 - 0x04);
         checksum != sum)
     {
-        std::cerr << std::hex << std::uppercase << "Header checksum mismatch. Expected: `\\x" << checksum <<
-            "`. Calculated: `\\x" << sum << "`." << std::dec << std::endl;
+        std::cerr << std::format("Header checksum mismatch. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
+                                 checksum, sum);
         isValid = false;
     }
 
     if (!check_header_version(version))
     {
-        std::cerr << "WARNING: Save file format version " << version <<
-            " is not officially supported by this tool. Trying to parse anyways." << std::endl;
+        std::cerr << std::format(
+            "WARNING: Save file format version {} is not officially supported by this tool. Trying to parse anyways.\n",
+            version);
     }
 
     // Only continue if the file has the proper signature, and a valid checksum.
@@ -86,9 +88,8 @@ SaveFile::SaveFile(std::span<const std::byte> data)
             songIdentifiers.emplace_back(DecodeSongIdentifier(reader));
             const auto& songIdentifier = songIdentifiers.back();
 
-            std::cout << "Song identifier: " << songIdentifier.name;
-            if (!songIdentifier.songHasData) std::cout << ", no data!";
-            std::cout << std::endl;
+            std::cout << std::format("Song identifier: {}{}\n", songIdentifier.name,
+                                     songIdentifier.songHasData ? "" : ", no data!");
         }
 
         for (const auto& identifier : songIdentifiers)
