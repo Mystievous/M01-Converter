@@ -17,7 +17,7 @@
 #include "M01Core/ByteReader.h"
 
 constexpr std::string_view kFileSignature = "M01W";
-constexpr uint32_t kDSVersions[] = {
+constexpr uint32_t kSaveVersionsDS[] = {
     0x04
 };
 
@@ -44,10 +44,10 @@ static SongIdentifier DecodeSongIdentifier(ByteReader& reader)
     };
 }
 
-static bool check_header_version(const uint32_t version)
+static bool CheckHeaderVersion(const uint32_t version)
 {
-    const auto foundVersion = std::ranges::find(kDSVersions, version);
-    return foundVersion != std::end(kDSVersions);
+    const auto foundVersion = std::ranges::find(kSaveVersionsDS, version);
+    return foundVersion != std::end(kSaveVersionsDS);
 }
 
 SaveFile::SaveFile(std::span<const std::byte> data)
@@ -70,7 +70,7 @@ SaveFile::SaveFile(std::span<const std::byte> data)
         isValid = false;
     }
 
-    if (!check_header_version(version))
+    if (!CheckHeaderVersion(version))
     {
         std::cerr << std::format(
             "WARNING: Save file format version {} is not officially supported by this tool. Trying to parse anyways.\n",

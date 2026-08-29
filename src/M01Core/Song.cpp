@@ -16,7 +16,7 @@ constexpr int kTicksPerQuarter = 480;
 constexpr int kTicksPerStep = kTicksPerQuarter / 4;
 constexpr int kNoteEndPadding = 10;
 
-enum Track
+enum TrackEnum
 {
     META,
     INST1,

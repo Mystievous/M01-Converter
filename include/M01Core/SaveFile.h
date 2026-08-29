@@ -9,7 +9,6 @@
 #include <span>
 #include <cstddef>
 
-#include "ByteReader.h"
 #include "Song.h"
 
 class SaveFile

@@ -8,6 +8,8 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+#include <optional>
 
 constexpr int kNumberOfSongs = 10;
 constexpr int kNumberOfInstruments = 8;
@@ -83,19 +85,42 @@ struct MasterInfo
     uint8_t step = 0;
 };
 
+constexpr auto kMeasureInfoSize = 0x08;
+
 struct MeasureInfo
 {
     uint16_t tempo;
     uint8_t step;
 };
 
+constexpr auto kNoteDataSize = 0x04;
+
 struct NoteData
 {
     uint8_t length;
     uint8_t velocity;
-    uint8_t noteId;
+    int8_t pitch;
     uint8_t startPoint;
-} __attribute__((packed));
+};
+
+struct Pattern
+{
+    std::vector<NoteData> notes;
+};
+
+struct Track
+{
+    // Instrument instrument;
+    // PlaybackFlags playback;
+    std::vector<std::optional<Pattern>> measures;
+};
+
+struct SongData
+{
+    MasterInfo masterInfo;
+    std::vector<MeasureInfo> measureInfos;
+    std::vector<Track> tracks;
+};
 
 struct BlockInfo
 {
