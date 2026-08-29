@@ -22,12 +22,12 @@ add_library(M01Core
         SaveFile.cpp
         FileBytes.cpp
         SongDecoder.cpp
-        ../../include/M01Core/SongDecoder.h
+        MidiExport.cpp
 )
 
+target_compile_options(M01Core PRIVATE -Wall -Wextra)
 target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)
 target_include_directories(M01Core PUBLIC ${midifile_SOURCE_DIR}/include)
-
 target_include_directories(M01Core
         PUBLIC
         ${CMAKE_SOURCE_DIR}/include

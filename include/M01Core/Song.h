@@ -6,19 +6,9 @@
 #ifndef SONG_H
 #define SONG_H
 
-#include "InstrumentHelper.h"
 #include "SaveStructure.h"
 #include "Measure.h"
 #include "MidiFile.h"
-
-struct InstrumentPlaybackInfo
-{
-    uint8_t track = 0;
-    uint8_t channel = 0;
-    uint8_t bank = 0;
-    uint8_t subBank = 0;
-    uint8_t program = 0;
-};
 
 class Song
 {
@@ -27,9 +17,6 @@ public:
     SongHeader header;
     std::vector<Measure> measures;
 
-    Song(FILE* saveFile, const SongIdentifier& identifier);
-
-    [[nodiscard]] int TicksToSwing(int ticks) const;
     [[nodiscard]] smf::MidiFile& MakeMidiFile() const;
     [[nodiscard]] smf::MidiFile& MakeExtendedMidiFile(const std::string& configPath = "config.yml") const;
 };

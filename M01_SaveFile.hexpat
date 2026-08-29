@@ -153,14 +153,14 @@ enum Scale : u8 {
 };
 
 enum DrumPattern : u8 {
-    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL, DandB, RandB, HIPHOP, PERC
+    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL, DnB, RnB, HIPHOP, PERC
 };
 
 bitfield PlaybackBitfield {
     hasFX : 1 [[color("ff00ff")]];
     muted : 1 [[color("ff0000")]];
     soloed : 1 [[color("ffff00")]];
-    kaosKey : 5 [[color("00ffff")]];
+    kaosKey : 5 [[color("00ffff")]]; // 0-11 are C-B. Enums cannot be represented in bitfields
 };
 
 struct PlaybackState {
@@ -235,7 +235,7 @@ struct Instrument {
             u8 program [[color("ffff00")]];
         }
     }
-    KaosMode kaosMode [[color("BD3600")]]; // Copy of the one in the PlaybackState if
+    KaosMode kaosMode [[color("BD3600")]]; // Copy of the one in the PlaybackState, except MONO if it's a drum track.
     s8 kaosVariation [[color("850018")]];
     u8 attack [[color("2bff00")]]; // MIDI CC: 73
     u8 release [[color("00ffd9")]]; // MIDI CC: 72
@@ -280,7 +280,7 @@ struct DelayInfo {
 };
 
 bitfield SceneState {
-    reverbOn : 1;
+    isReverbSelected : 1; // If false, then effect is Delay.
     unknown01 : 1;
     sceneLocked : 1;
     swing : 8;

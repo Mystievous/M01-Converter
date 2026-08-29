@@ -5,10 +5,73 @@
 
 #include "M01Core/SongDecoder.h"
 
+#include <cstdint>
 #include <format>
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <string>
+#include <algorithm>
+
+#include "M01Core/Bits.h"
+#include "M01Core/InstrumentHelper.h"
+
+static constexpr std::string_view ToString(const KaosMode kaosMode)
+{
+    switch (kaosMode)
+    {
+    case KaosMode::MONO: return "MONO";
+    case KaosMode::CHD2: return "CHD2";
+    case KaosMode::CHD3: return "CHD3";
+    case KaosMode::CHD4: return "CHD4";
+    case KaosMode::DRUM: return "DRUM";
+    }
+    return "UNKNOWN";
+}
+
+constexpr std::string_view kKaosKey[] = {
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+};
+
+static constexpr std::string_view ToString(const Key key)
+{
+    const auto index = static_cast<size_t>(key);
+    return index < std::size(kKaosKey) ? kKaosKey[index] : "UNKNOWN";
+}
+
+constexpr std::string_view kKaosScale[] = {
+    "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES", "DIM", "COMDIM",
+    "MPENTA", "mPENTA", "RAGA1", "RAGA2", "ARABIA", "SPAIN", "GYPSY", "EGYPT", "HAWAII", "PELOG", "JAPAN", "RYUKYU",
+    "WHOLE", "m3RD", "M3RD", "4TH", "5TH", "OCTAVE"
+};
+
+static constexpr std::string_view ToString(const Scale scale)
+{
+    const auto index = static_cast<size_t>(scale);
+    return index < std::size(kKaosScale) ? kKaosScale[index] : "UNKNOWN";
+}
+
+constexpr std::string_view kKaosDrumPattern[] = {
+    "8BEAT1", "8BEAT2", "16BEAT1", "16BEAT2", "ROCK1", "ROCK2", "ROCK3", "FUNK", "HOUSE1",
+    "HOUSE2", "ELECTRO", "MINIMAL", "D&B", "R&B", "HIPHOP", "PERC"
+};
+
+static constexpr std::string_view ToString(const DrumPattern drumPattern)
+{
+    const auto index = static_cast<size_t>(drumPattern);
+    return index < std::size(kKaosDrumPattern) ? kKaosDrumPattern[index] : "UNKNOWN";
+}
+
+static constexpr std::string_view ToString(const ReverbType reverbType)
+{
+    switch (reverbType)
+    {
+    case ReverbType::Hall: return "Hall";
+    case ReverbType::Room: return "Room";
+    case ReverbType::Sprg: return "Sprg";
+    }
+    return "UNKNOWN";
+}
 
 constexpr std::string_view kSongLabel = "song";
 constexpr uint32_t kSongVersionsDS[] = {
@@ -31,13 +94,109 @@ static bool CheckSongDataVersion(const uint32_t version)
     return foundVersion != std::end(kSongDataVersionsDS);
 }
 
-enum class Tag : uint16_t
+static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& identifier)
 {
-    End = 0x0000,
-    MasterInfo = 0x0201,
-    MeasureInfo = 0x0104,
-    PatternData = 0x0105,
-};
+    const auto bank = reader.Read<uint8_t>();
+    const auto subBank = reader.Read<uint8_t>();
+    const auto program = reader.Read<uint8_t>();
+    const auto kaosModeCopy = static_cast<KaosMode>(reader.Read<uint8_t>());
+    const auto kaosVariation = reader.Read<int8_t>();
+    const auto attack = reader.Read<uint8_t>();
+    const auto release = reader.Read<uint8_t>();
+    const auto volume = reader.Read<uint8_t>();
+    const auto panning = reader.Read<int8_t>();
+
+    const auto instrumentHelper = InstrumentHelper{};
+    const auto instrumentName = instrumentHelper.GetInstrumentName(bank, subBank, program);
+
+    std::cout << std::format("{}: {} - {} - {}\n", identifier.name, instrumentName.bank, instrumentName.subBank,
+                             instrumentName.program);
+    std::cout << std::format("  Kaos Mode Copy: {}, Kaos Variation: {}\n", ToString(kaosModeCopy),
+                             kaosVariation);
+    std::cout << std::format("  Attack: {}, Release: {}, Volume: {}, Panning: {}\n", attack, release, volume, panning);
+
+    const auto playbackByte = reader.Read<uint8_t>();
+    const auto hasFX = bits::Get<0, 1>(playbackByte);
+    const auto muted = bits::Get<1, 1>(playbackByte);
+    const auto soloed = bits::Get<2, 1>(playbackByte);
+    const auto kaosKey = static_cast<Key>(bits::Get<3, 5>(playbackByte));
+
+    std::cout << std::format("  hasFX: {}, muted: {}, soloed: {}, kaosKey: {}\n", hasFX, muted, soloed,
+                             ToString(kaosKey));
+
+    const auto kaosScale = static_cast<Scale>(reader.Read<uint8_t>());
+    const auto kaosDrumPattern = static_cast<DrumPattern>(reader.Read<uint8_t>());
+    const auto kaosMode = static_cast<KaosMode>(reader.Read<uint8_t>());
+    const auto keyboardOctave = reader.Read<uint8_t>();
+    reader.Skip(0x01);
+
+    if (kaosMode != KaosMode::DRUM && kaosMode != kaosModeCopy)
+    {
+        std::cerr << std::format("Song {} instrument {} - {} - {} has mismatched kaos modes.\n", identifier.name,
+                                 instrumentName.bank, instrumentName.subBank, instrumentName.program);
+    }
+
+    const auto playbackState = PlaybackState{
+        .hasFX = hasFX,
+        .muted = muted,
+        .soloed = soloed,
+        .kaosKey = kaosKey,
+        .kaosScale = kaosScale,
+        .kaosDrumPattern = kaosDrumPattern,
+        .kaosMode = kaosMode,
+        .keyboardOctave = keyboardOctave
+    };
+
+    std::cout << std::format("  kaosScale: {}, kaosDrumPattern: {}, kaosMode: {}, keyboardOctave: {}\n",
+                             ToString(kaosScale), ToString(kaosDrumPattern), ToString(kaosMode),
+                             keyboardOctave);
+
+    std::cout << "  Drum Samples:" << std::endl;
+
+    auto drumInfos = std::vector<DrumInfo>{};
+    drumInfos.reserve(kNumberOfDrumSamples);
+    for (int i = 0; i < kNumberOfDrumSamples; ++i)
+    {
+        const auto mixByte = reader.Read<uint8_t>();
+        const auto sampleLevel = bits::Get<0, 4>(mixByte);
+        const auto samplePanning = bits::Get<4, 4>(mixByte);
+
+        const auto sampleTimestretch = reader.Read<int8_t>();
+
+        drumInfos.emplace_back(sampleLevel, samplePanning, sampleTimestretch);
+
+        std::cout << std::format("  {}:\n", i);
+        std::cout << std::format("    level: {}, panning: {}, timestretch: {}\n", sampleLevel, samplePanning,
+                                 sampleTimestretch);
+    }
+
+    reader.Skip(0x11);
+
+    return {
+        .bank = bank,
+        .subBank = subBank,
+        .program = program,
+        .kaosModeCopy = kaosModeCopy,
+        .kaosVariation = kaosVariation,
+        .attack = attack,
+        .release = release,
+        .volume = volume,
+        .panning = panning,
+        .playbackState = playbackState,
+        .drumInfo = std::move(drumInfos)
+    };
+}
+
+namespace
+{
+    enum class Tag : uint16_t
+    {
+        End = 0x0000,
+        MasterInfo = 0x0201,
+        MeasureInfo = 0x0104,
+        PatternData = 0x0105,
+    };
+}
 
 std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier)
 {
@@ -61,7 +220,50 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                                  identifier.name, songVersion);
     }
 
-    reader.Skip(0x1E8);
+    std::vector<Instrument> instruments;
+    instruments.reserve(kNumberOfInstruments);
+
+    for (int i = 0; i < kNumberOfInstruments; ++i)
+    {
+        instruments.emplace_back(DecodeInstrument(reader, identifier));
+    }
+
+    const auto hasSolo = bits::Get<0, 1>(reader.Read<uint8_t>());
+
+    reader.Skip(0x03);
+
+    const auto reverbType = static_cast<ReverbType>(reader.Read<uint8_t>());
+    const auto reverbTime = reader.Read<uint8_t>();
+    const auto reverbLevel = reader.Read<uint8_t>();
+    const auto reverbInfo = ReverbInfo{
+        .type = reverbType,
+        .time = reverbTime,
+        .level = reverbLevel
+    };
+    reader.Skip(0x01);
+
+    const auto delaySyncOn = bits::Get<0, 1>(reader.Read<uint8_t>());
+    const auto delayTime = reader.Read<uint8_t>();
+    const auto delayPanRatio = reader.Read<int8_t>();
+    const auto delayFeedback = reader.Read<uint8_t>();
+    const auto delayLevel = reader.Read<uint8_t>();
+    const auto delayInfo = DelayInfo{
+        .syncOn = delaySyncOn,
+        .time = delayTime,
+        .panRatio = delayPanRatio,
+        .feedback = delayFeedback,
+        .level = delayLevel
+    };
+    reader.Skip(0x03);
+
+    const auto sceneBytes = reader.Read<uint16_t>();
+    const auto fxType = bits::Get<0, 1>(sceneBytes) ? FXType::Reverb : FXType::Delay;
+    // One empty bit between reverb toggle and locked
+    const auto locked = bits::Get<2, 1>(sceneBytes);
+    const uint8_t swing = bits::Get<3, 8>(sceneBytes);
+
+    reader.Skip(0x16);
+
     if (const auto label = reader.ReadString(4); label != kSongLabel)
     {
         std::cerr << std::format("Song label for {} is not `song`, instead: {}\n", identifier.name, label);
@@ -111,8 +313,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             const auto numTracks = reader.Read<uint8_t>();
             const auto numMeasures = reader.Read<uint8_t>();
             const auto tempo = reader.Read<uint16_t>();
-            const auto swing = reader.Read<uint8_t>();
-            const auto step = reader.Read<uint8_t>();
+            const auto masterSwing = reader.Read<uint8_t>();
+            const auto stepsPerMeasure = reader.Read<uint8_t>();
             reader.Skip(0x02);
 
             if (numTracks > kNumberOfInstruments)
@@ -123,10 +325,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 );
             }
             std::cout << std::format(
-                "Number of Tracks: {}\nNumber of Measures: {}\nTempo: {}\nSwing: {}\nStep: {}\n",
-                numTracks, numMeasures, tempo,
-                swing, step
-            );
+                "Number of Tracks: {}\nNumber of Measures: {}\nTempo: {}\nSwing: {}\nSteps Per Measure: {}\n",
+                numTracks, numMeasures, tempo, masterSwing, stepsPerMeasure);
 
             // MasterInfo comes before tracks in all 3DS and NDS saves.
             // If it comes afterwards, tracks processed before it will be cleared.
@@ -134,12 +334,18 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                               .measures = std::vector<std::optional<Pattern>>(numMeasures)
                           });
 
+            const auto instrumentCount = std::min<int>(numTracks, static_cast<int>(instruments.size()));
+            for (int i = 0; i < instrumentCount; ++i)
+            {
+                tracks[i].instrument = instruments[i];
+            }
+
             masterInfo = {
                 .numTracks = numTracks,
                 .numMeasures = numMeasures,
                 .tempo = tempo,
-                .swing = swing,
-                .step = step
+                .swing = masterSwing,
+                .stepsPerMeasure = stepsPerMeasure
             };
         }
         else if (chunkTag == Tag::MeasureInfo)
@@ -184,8 +390,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 for (int i = 0; i < measureCount; ++i)
                 {
                     const auto tempo = reader.Read<uint16_t>();
-                    const auto step = reader.Read<uint8_t>();
-                    measures->emplace_back(tempo, step);
+                    const auto steps = reader.Read<uint8_t>();
+                    measures->emplace_back(tempo, steps);
                     reader.Skip(0x05);
                 }
             }
@@ -234,13 +440,13 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                     for (int i = 0; i < numberOfNotes; ++i)
                     {
                         const auto noteLength = reader.Read<uint8_t>();
-                        const auto noteVelocity = reader.Read<uint8_t>();
+                        const auto noteIntensity = reader.Read<uint8_t>();
                         const auto noteId = reader.Read<uint8_t>();
                         const auto startPoint = reader.Read<uint8_t>();
 
                         notes.emplace_back(
                             noteLength,
-                            noteVelocity,
+                            noteIntensity * 17 / 2,
                             noteId - 0x80,
                             startPoint
                         );
@@ -264,10 +470,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         {
             reader.Skip(chunkLength);
         }
-
-        // std::cout << std::hex << std::uppercase << "Tag: " << static_cast<uint16_t>(tag) << std::dec << std::endl;
-        // std::cout << std::hex << std::uppercase << "Payload Start: " << payloadStart - 0x04 << std::dec << std::endl;
-        // std::cout << std::hex << std::uppercase << "Length: " << length << std::dec << std::endl;
 
         if (reader.Position() != chunkEnd)
         {
@@ -299,7 +501,17 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         return std::nullopt;
     }
 
+    // Ensure there is measureInfo entries for all measures present.
+    measures->resize(masterInfo->numMeasures);
+
     return SongData{
+        .name = identifier.name,
+        .hasSolo = hasSolo,
+        .fxType = fxType,
+        .locked = locked,
+        .swing = swing,
+        .reverbInfo = reverbInfo,
+        .delayInfo = delayInfo,
         .masterInfo = *masterInfo,
         .measureInfos = std::move(*measures),
         .tracks = std::move(tracks)

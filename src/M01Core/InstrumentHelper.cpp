@@ -70,21 +70,6 @@ const InstrumentMap defaultMap = {
 
 };
 
-constexpr std::string_view kKaosModes[] = {
-    "MONO", "CHD2", "CHD3", "CHD4", "DRUM"
-};
-
-constexpr std::string_view kKaosScale[] = {
-    "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES", "DIM", "COMDIM",
-    "MPENTA", "mPENTA", "RAGA1", "RAGA2", "ARABIA", "SPAIN", "GYPSY", "EGYPT", "HAWAII", "PELOG", "JAPAN", "RYUKYU",
-    "WHOLE", "m3RD", "M3RD", "FOURTH", "FIFTH", "OCTAVE"
-};
-
-constexpr std::string_view kKaosDrumPattern[] = {
-    "EIGHT_BEAT1", "EIGHT_BEAT2", "SIXTEEN_BEAT1", "SIXTEEN_BEAT2", "ROCK1", "ROCK2", "ROCK3", "FUNK", "HOUSE1",
-    "HOUSE2", "ELECTRO", "MINIMAL", "DandB", "RandB", "HIPHOP", "PERC"
-};
-
 constexpr int kNumberOfDrumNotes = 12;
 constexpr int kDrumLowestNote = 60;
 constexpr int kNoteOffset = 0x80;

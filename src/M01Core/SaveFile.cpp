@@ -50,7 +50,7 @@ static bool CheckHeaderVersion(const uint32_t version)
     return foundVersion != std::end(kSaveVersionsDS);
 }
 
-SaveFile::SaveFile(std::span<const std::byte> data)
+SaveFile::SaveFile(const std::span<const std::byte> data)
 {
     ByteReader reader(data);
     const auto checksum = reader.Read<uint32_t>();
@@ -97,14 +97,6 @@ SaveFile::SaveFile(std::span<const std::byte> data)
             if (!identifier.songHasData) continue;
             DecodeSongData(reader, identifier);
         }
-
-        // for (const auto& songIdentifier : header.songIdentifiers)
-        // {
-        //     if (songIdentifier.songHasData)
-        //     {
-        //         songs.emplace_back(saveFile, songIdentifier);
-        //     }
-        // }
     }
 }
 

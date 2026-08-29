@@ -28,11 +28,11 @@ namespace M01Core
             r.name = song.identifier.name;
             if (extended)
             {
-                r.midi = &song.MakeExtendedMidiFile(configPath);
+                // r.midi = &song.MakeExtendedMidiFile(configPath);
             }
             else
             {
-                r.midi = &song.MakeMidiFile();
+                // r.midi = &song.MakeMidiFile();
             }
             results.push_back(r);
         }
