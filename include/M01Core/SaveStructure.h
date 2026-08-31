@@ -130,6 +130,10 @@ struct NoteData
 
 struct Pattern
 {
+    // Pattern stores *all* notes that are in the pattern, even ones that were
+    // later truncated by shortening the measure's steps.
+    // This must be cross-referenced with the measure's steps from its MeasureInfo
+    // entry to ensure only active notes are used.
     std::vector<NoteData> notes;
 };
 

@@ -80,18 +80,29 @@ static int MeasureTicks(const int steps, const int swing)
     return steps / 2 * kTicksPerSwingPair + steps % 2 * StretchedStepTicks(swing);
 }
 
-static std::vector<int> MeasureStartTicks(const SongData& song)
+// Calculates the number of steps in any given measure.
+static std::vector<int> MeasureStepCounts(const SongData& song)
+{
+    auto stepCounts = std::vector<int>();
+    stepCounts.reserve(song.measureInfos.size());
+
+    for (const auto& measure : song.measureInfos)
+    {
+        stepCounts.push_back(measure.steps != 0 ? measure.steps : song.masterInfo.stepsPerMeasure);
+    }
+
+    return stepCounts;
+}
+
+static std::vector<int> MeasureStartTicks(const SongData& song, const std::vector<int>& stepCounts)
 {
     auto startTicks = std::vector<int>{};
-    startTicks.reserve(song.measureInfos.size());
+    startTicks.reserve(stepCounts.size());
 
     int cumulativeTicks = 0;
 
-    // ReSharper disable once CppUseStructuredBinding
-    for (const auto& measure : song.measureInfos)
+    for (const auto& steps : stepCounts)
     {
-        const auto steps = measure.steps != 0 ? measure.steps : song.masterInfo.stepsPerMeasure;
-
         startTicks.push_back(cumulativeTicks);
         cumulativeTicks += MeasureTicks(steps, song.swing);
     }
@@ -99,42 +110,46 @@ static std::vector<int> MeasureStartTicks(const SongData& song)
     return startTicks;
 }
 
+static void AddTempoChanges(smf::MidiFile& midiFile, const SongData& song, const std::vector<int>& measureStartTicks)
+{
+    std::optional<uint16_t> currentTempo;
+
+    for (int i = 0; i < static_cast<int>(song.measureInfos.size()); ++i)
+    {
+        const auto& measure = song.measureInfos[i];
+        // ReSharper disable once CppTooWideScopeInitStatement
+        const auto measureTempo = measure.tempo != 0 ? measure.tempo : song.masterInfo.tempo;
+
+        if (currentTempo != measureTempo)
+        {
+            currentTempo = measureTempo;
+            midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], measureTempo);
+        }
+    }
+}
+
 smf::MidiFile MakeMidiFile(const SongData& song)
 {
     auto midiFile = smf::MidiFile();
 
+    const auto trackCount = song.tracks.size();
+
     midiFile.setTicksPerQuarterNote(kTicksPerQuarter);
-    midiFile.addTracks(song.masterInfo.numTracks);
+    midiFile.addTracks(static_cast<int>(trackCount));
 
     // Meta Track
     midiFile.addTrackName(kMetaTrackIndex, 0, song.name);
-    midiFile.addTempo(kMetaTrackIndex, 0, song.masterInfo.tempo);
 
     // Instrument Tracks
-    for (int i = 0; i < song.masterInfo.numTracks; ++i)
+    for (size_t i = 0; i < trackCount; ++i)
     {
-        midiFile.addTrackName(i + 1, 0, "Track-" + std::to_string(i));
+        midiFile.addTrackName(static_cast<int>(i) + 1, 0, "Track-" + std::to_string(i));
     }
 
-    const auto measureStartTicks = MeasureStartTicks(song);
+    const auto measureStepCounts = MeasureStepCounts(song);
+    const auto measureStartTicks = MeasureStartTicks(song, measureStepCounts);
 
-    uint16_t currentTempo = song.masterInfo.tempo;
-    for (int i = 0; i < static_cast<int>(song.measureInfos.size()); ++i)
-    {
-        // ReSharper disable once CppTooWideScopeInitStatement
-        const auto& [tempo, steps] = song.measureInfos[i];
-
-        if (tempo != 0 && tempo != currentTempo)
-        {
-            currentTempo = tempo;
-            midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], currentTempo);
-        }
-        else if (tempo == 0 && currentTempo != song.masterInfo.tempo)
-        {
-            currentTempo = song.masterInfo.tempo;
-            midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], currentTempo);
-        }
-    }
+    AddTempoChanges(midiFile, song, measureStartTicks);
 
     for (int t = 0; t < static_cast<int>(song.tracks.size()); ++t)
     {
@@ -145,9 +160,17 @@ smf::MidiFile MakeMidiFile(const SongData& song)
             {
                 const auto& [notes] = *track.measures[m];
                 const auto measureStartTick = measureStartTicks[m];
+                const auto measureStepCount = measureStepCounts[m];
 
                 for (auto& [length, velocity, pitch, startPoint] : notes)
                 {
+                    // Note data can be present outside a pattern's "visible" range, if it is shortened after writing
+                    // notes, or a range of notes are copied to the far edge of the pattern.
+                    if (startPoint >= measureStepCount)
+                    {
+                        continue;
+                    }
+
                     const auto startTime = TicksWithSwing(song.swing, startPoint * kTicksPerStep) + measureStartTick;
                     const auto endTime =
                         TicksWithSwing(song.swing, (startPoint * 4 + length + 1) * kTicksPerSubStep)
@@ -200,7 +223,6 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
 
     // Meta Track
     midiFile.addTrackName(kMetaTrackIndex, 0, song.name);
-    midiFile.addTempo(kMetaTrackIndex, 0, song.masterInfo.tempo);
 
     // Initialize Instrument Tracks and Info
     std::vector<TrackPlayback> playbacks;
@@ -229,16 +251,10 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
             if (comparePlayback.channel != playback.channel)
                 continue;
 
-            // Sharing channel is fine if they have the same program change.
-            // Only shared channel with different patch info is a problem.
-            if (comparePlayback.bankMsb == playback.bankMsb
-                && comparePlayback.bankLsb == playback.bankLsb
-                && comparePlayback.program == playback.program)
-                continue;
-
             std::cerr << std::format(
-                "Song {}, Track {} has the same MIDI channel as Track {}. Any bank/program changes may be mangled.\n",
-                song.name, playback.track, comparePlayback.track);
+                "Song {}, Track {} has the same MIDI channel as Track {}. Any patch or mix settings may get mixed.\n",
+                song.name, playback.track, comparePlayback.track
+            );
         }
 
         configs.push_back(std::move(config));
@@ -318,25 +334,10 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
         );
     }
 
-    const auto measureStartTicks = MeasureStartTicks(song);
+    const auto measureStepCounts = MeasureStepCounts(song);
+    const auto measureStartTicks = MeasureStartTicks(song, measureStepCounts);
 
-    uint16_t currentTempo = song.masterInfo.tempo;
-    for (int i = 0; i < static_cast<int>(song.measureInfos.size()); i++)
-    {
-        // ReSharper disable once CppTooWideScopeInitStatement
-        const auto& [tempo, steps] = song.measureInfos[i];
-
-        if (tempo != 0 && tempo != currentTempo)
-        {
-            currentTempo = tempo;
-            midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], currentTempo);
-        }
-        else if (tempo == 0 && currentTempo != song.masterInfo.tempo)
-        {
-            currentTempo = song.masterInfo.tempo;
-            midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], currentTempo);
-        }
-    }
+    AddTempoChanges(midiFile, song, measureStartTicks);
 
     for (int t = 0; t < static_cast<int>(song.tracks.size()); ++t)
     {
@@ -350,9 +351,17 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
             {
                 const auto& [notes] = *track.measures[m];
                 const auto measureStartTick = measureStartTicks[m];
+                const auto measureStepCount = measureStepCounts[m];
 
                 for (auto& [length, velocity, pitch, startPoint] : notes)
                 {
+                    // Note data can be present outside a pattern's "visible" range, if it is shortened after writing
+                    // notes, or a range of notes are copied to the far edge of the pattern.
+                    if (startPoint >= measureStepCount)
+                    {
+                        continue;
+                    }
+
                     const auto startTime = TicksWithSwing(song.swing, startPoint * kTicksPerStep) + measureStartTick;
                     const auto endTime = TicksWithSwing(song.swing, (startPoint * 4 + length + 1) * kTicksPerSubStep)
                         + measureStartTick - kNoteEndPadding;

@@ -6,9 +6,8 @@ outputs MIDI (.mid) files corresponding to each of the songs stored in the save 
 It has two modes of running:
 
 1. Matching the MIDI export feature of the 3DS version of the app
-    - Mostly byte-for-byte identical to 3DS exports, many do get exported identically.
-    - The only differences I can still find:
-        - For notes with a stored length of 31, the 3DS itself seems to be inconsistent from one export to the next.
+    - Verified byte-for-byte identical to native 3DS exports, including full-length built-in demo songs.
+
 2. An export with "extended" features, such as automatically setting Patch Changes, and many other CC messages like
    Volume and Pan.
 
@@ -46,8 +45,8 @@ Or, if you want to use the extended export, make sure the config.yml is next to 
 - All song slots with data saved to them are exported to individual MIDI files with the same name as the song.
     - i.e. "MY SONG" will be exported to "MY SONG.mid"
 - Each MIDI file has 9 tracks. A "Meta" MIDI track with Song Name and Tempo, and each Instrument/Track in the save file
-  exported as a separate MIDI track, with its own channel.
-    - i.e. Instrument 1 is on MIDI Track 1, and Channel 0.
+  exported as a separate MIDI track, with its own channel (see Extended mode for configurable channels).
+    - i.e. in Standard mode, Instrument 1 is on MIDI Track 1, with Channel 0.
 - All "Master" settings of tempo and swing are properly reflected to the MIDI file.
 - Overrides of the tempo from the "set" menu are also exported to the MIDI file as Tempo Change events.
 - The program reads all important information from the save file. However most of it is unused in the standard MIDI
@@ -158,7 +157,7 @@ Notes can also be remapped by specifying specific note numbers:
 
 - Ticks Per Quarter note is set to 480
 - Each "step" is one 16th note, so a "16 step" sequence is 4 beats.
-- Swing
+- Swing:
     - The swing setting is a *16th note swing* i.e. every other step is swung.
     - Swing splits steps into pairs, with the first being stretched and the second being squeezed.
         - The length of the pair is always the same as two straight steps, it's just the midpoint that gets adjusted
@@ -172,6 +171,9 @@ Notes can also be remapped by specifying specific note numbers:
 - Note lengths have a constant 10 tick padding at the end of each note
     - i.e. when swing is 50%, a note that is 1 step long will be 110 ticks long, with 10 ticks of rest before the start
       of the next step.
+- Note data can be present outside a pattern's "visible" range, i.e. if the pattern is shortened after writing notes to
+  it, or by copying a range of notes extending past the end of the pattern.
+    - This excess note data must be trimmed to only notes within the measure/pattern's "step size" from `MeasureInfo`
 - When a song has bars with an odd number of steps, the bars following may be misaligned with the "true" timeline/grid.
 - I modified the [midifile](https://github.com/craigsapp/midifile) library I'm using to use MIDI Running Status the same
   way as the 3DS export, as well as using integer math to calculate the tempo without rounding.
