@@ -113,9 +113,6 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
     const auto volume = reader.Read<uint8_t>();
     const auto panning = reader.Read<int8_t>();
 
-    const auto instrumentHelper = InstrumentHelper{};
-    const auto instrumentName = instrumentHelper.GetInstrumentName(id);
-
     const auto playbackByte = reader.Read<uint8_t>();
     const auto hasFX = bits::Get<0, 1>(playbackByte);
     const auto muted = bits::Get<1, 1>(playbackByte);
@@ -130,6 +127,8 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
 
     if (kaosMode != KaosMode::DRUM && kaosMode != kaosModeCopy)
     {
+        const auto instrumentHelper = InstrumentHelper{};
+        const auto instrumentName = instrumentHelper.GetInstrumentName(id);
         std::cerr << std::format("Song {} instrument {} - {} - {} has mismatched kaos modes.\n", identifier.name,
                                  instrumentName.bank, instrumentName.category, instrumentName.program);
     }
@@ -464,7 +463,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         }
 
         if (chunkTag == Tag::End) break;
-
     }
     if (reader.Position() != songEndAddress)
     {
