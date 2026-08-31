@@ -164,6 +164,11 @@ smf::MidiFile MakeMidiFile(const SongData& song)
         }
     }
 
+    // midifile sorts with qsort, which is not consistent.
+    // This makes events that are on the same tick have an arbitrary order, sometimes not matching the 3DS export.
+    // markSequence stamps insertion order to MidiEvent::seq, and the comparator respects it when sorting.
+    // After running that, the export will match the 3DS ordering precisely.
+    midiFile.markSequence();
     midiFile.sortTracks();
 
     return midiFile;
@@ -361,6 +366,12 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
         }
     }
 
+    // midifile sorts with qsort, which is not consistent.
+    // This makes events that are on the same tick have an arbitrary order, sometimes not matching the 3DS export.
+    // markSequence stamps insertion order to MidiEvent::seq, and the comparator respects it when sorting.
+    // After running that, the export will match the 3DS ordering precisely,
+    // and bank selects will always fire before their program change.
+    midiFile.markSequence();
     midiFile.sortTracks();
 
     return midiFile;

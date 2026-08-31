@@ -9,8 +9,6 @@ It has two modes of running:
     - Mostly byte-for-byte identical to 3DS exports, many do get exported identically.
     - The only differences I can still find:
         - For notes with a stored length of 31, the 3DS itself seems to be inconsistent from one export to the next.
-        - Sometimes exported MIDI events from this tool are inconsistent in ordering if they have the same MIDI
-          position.
 2. An export with "extended" features, such as automatically setting Patch Changes, and many other CC messages like
    Volume and Pan.
 
@@ -177,3 +175,6 @@ Notes can also be remapped by specifying specific note numbers:
 - When a song has bars with an odd number of steps, the bars following may be misaligned with the "true" timeline/grid.
 - I modified the [midifile](https://github.com/craigsapp/midifile) library I'm using to use MIDI Running Status the same
   way as the 3DS export, as well as using integer math to calculate the tempo without rounding.
+- midifile sorts each track with `qsort`, which is not consistent, so events on the same tick had arbitrary order. To
+  match the 3DS export order, we use `markSequence()` before calling `sortTracks()`, which makes it use insertion order
+  when sorting. This matches the 3DS export, and also ensures bank selects fire before their program changes.
