@@ -11,13 +11,16 @@
 #include <string>
 #include <vector>
 
+#include "M01Core/SaveStructure.h"
+
 constexpr int kNumberOfBanks = 3;
 constexpr int kNumberOfSubBanks = 10;
 
 constexpr std::string kBankNames[] = {
     "M1",
     "01/W",
-    "EX"};
+    "EX"
+};
 
 constexpr std::string kSubBankNames[] = {
     "Keyboard",
@@ -29,27 +32,21 @@ constexpr std::string kSubBankNames[] = {
     "Poly Synth",
     "SE/Other",
     "Hit/Chord",
-    "Drum Kit"};
+    "Drum Kit"
+};
 
 struct InstrumentName
 {
     std::string bank;
-    std::string subBank;
+    std::string category;
     std::string program;
-};
-
-struct InstrumentIds
-{
-    uint8_t bank;
-    uint8_t subBank;
-    uint8_t program;
 };
 
 struct InstrumentConfig
 {
     std::optional<uint8_t> channel;
-    std::optional<uint8_t> bank;
-    std::optional<uint8_t> subBank;
+    std::optional<uint8_t> bankMsb;
+    std::optional<uint8_t> bankLsb;
     std::optional<uint8_t> program;
     std::optional<int> transposition;
     std::optional<std::vector<uint8_t>> mapList;
@@ -66,24 +63,20 @@ public:
 
     InstrumentHelper();
 
-    [[nodiscard]] InstrumentName GetInstrumentName(uint8_t bankId, uint8_t subBankId, uint8_t programId) const;
+    [[nodiscard]] InstrumentName GetInstrumentName(InstrumentId id) const;
 
-    [[nodiscard]] InstrumentIds GetProgramChangeIds(const std::string &instrumentName) const;
+    void LoadConfigFile(const std::string& configPath);
 
-    void LoadConfigFile(const std::string &configPath);
+    [[nodiscard]] InstrumentConfig GetInstrumentConfig(InstrumentId id) const;
 
-    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const uint8_t &bankId,
-                                                       const uint8_t &subBankId,
-                                                       const uint8_t &programId) const;
+    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string& bankName,
+                                                       const std::string& categoryName,
+                                                       const std::string& programName) const;
 
-    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string &bankName,
-                                                       const std::string &subBankName,
-                                                       const std::string &programName) const;
+    static uint8_t RemapNoteNumber(const InstrumentConfig& instrumentConfig, int pitch);
 
-    static uint8_t RemapNoteNumber(const InstrumentConfig &instrumentConfig, const uint8_t &noteNumber);
-
-    static uint8_t MapRange(const long &value, const long &min, const long &max, const long &newMin,
-                            const long &newMax);
+    static uint8_t MapRange(const long& value, const long& min, const long& max, const long& newMin,
+                            const long& newMax);
 
 private:
     using ConfigTree = std::map<std::string, std::map<std::string, std::map<std::string, InstrumentConfig>>>;

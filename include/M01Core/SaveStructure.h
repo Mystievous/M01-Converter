@@ -7,141 +7,175 @@
 #define SAVESTRUCTURE_H
 
 #include <cstdint>
+#include <string>
+#include <vector>
+#include <optional>
 
 constexpr int kNumberOfSongs = 10;
 constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
+constexpr int kNumberOfDrumSamples = 12;
+
+enum class KaosMode : uint8_t
+{
+    MONO, CHD2, CHD3, CHD4, DRUM
+};
+
+enum class Key : uint8_t
+{
+    C, C_SHARP, D, D_SHARP, E, F, F_SHARP, G, G_SHARP, A, A_SHARP, B
+};
+
+enum class Scale : uint8_t
+{
+    CHROMA, IONIAN, DORIAN, PHRYGI, LYDIAN, MIXLYD, AEOLIA, LOCRIA, MBLUES, mBLUES, DIM, COMDIM, MPENTA, mPENTA, RAGA1,
+    RAGA2, ARABIA, SPAIN, GYPSY, EGYPT, HAWAII, PELOG, JAPAN, RYUKYU, WHOLE, m3RD, M3RD, FOURTH, FIFTH, OCTAVE
+};
+
+enum class DrumPattern : uint8_t
+{
+    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL,
+    DnB, RnB, HIPHOP, PERC
+};
 
 struct PlaybackState
 {
-    uint8_t hasFX : 1;
-    uint8_t muted : 1;
-    uint8_t soloed : 1;
-} __attribute__((packed));
+    bool hasFX = false;
+    bool muted = false;
+    bool soloed = false;
+    Key kaosKey = Key::C;
+    Scale kaosScale = Scale::CHROMA;
+    DrumPattern kaosDrumPattern = DrumPattern::EIGHT_BEAT1;
+    KaosMode kaosMode = KaosMode::MONO;
+    uint8_t keyboardOctave = 0;
+};
 
 struct DrumInfo
 {
-    uint8_t level;
-    int8_t timestretch;
-    int8_t panning;
+    uint8_t level = 0;
+    uint8_t panning = 0;
+    int8_t timestretch = 0;
+};
+
+struct InstrumentId
+{
+    uint8_t bank = 0;
+    uint8_t category = 0;
+    uint8_t program = 0;
 };
 
 struct Instrument
 {
-    uint8_t _1[0x08];
-    uint8_t bank;
-    uint8_t subBank;
-    uint8_t program;
-    uint8_t _2[0x02];
-    uint8_t attack;
-    uint8_t release;
-    uint8_t volume;
-    int8_t panning;
+    InstrumentId id;
+    // Copy of the one in the PlaybackState, but MONO (0x00) if it's a drum track.
+    KaosMode kaosModeCopy = KaosMode::MONO;
+    int8_t kaosVariation = 0;
+    uint8_t attack = 0;
+    uint8_t release = 0;
+    uint8_t volume = 0;
+    int8_t panning = 0;
     PlaybackState playbackState;
-    uint8_t _3[0x05];
-    DrumInfo drumInfo[8];
-    uint8_t _4[0x09];
-} __attribute__((packed));
+    std::vector<DrumInfo> drumInfo;
+};
 
-struct PlaybackInfo
+enum class ReverbType : uint8_t
 {
-    uint8_t hasSolo : 1;
-} __attribute__((packed));
+    Hall,
+    Room,
+    Sprg
+};
 
 struct ReverbInfo
 {
-    uint8_t reverbType;
-    uint8_t reverbTime;
-    uint8_t reverbLevel;
-} __attribute__((packed));
+    ReverbType type = ReverbType::Hall;
+    uint8_t time = 0;
+    uint8_t level = 0;
+};
 
 struct DelayInfo
 {
-    bool syncOn;
-    uint8_t time;
-    int8_t panRatio;
-    uint8_t feedback;
-    uint8_t level;
-    uint8_t _1[0x03];
-} __attribute__((packed));
-
-struct SceneState
-{
-    uint8_t reverbOn : 1;
-    uint8_t padding : 1;
-    uint8_t sceneLocked : 1;
-} __attribute__((packed));
+    bool syncOn = false;
+    uint8_t time = 0;
+    int8_t panRatio = 0;
+    uint8_t feedback = 0;
+    uint8_t level = 0;
+};
 
 struct MasterInfo
 {
-    uint16_t tempo;
-    uint8_t swing;
-    uint8_t step;
-} __attribute__((packed));
+    uint8_t numTracks = 0;
+    uint8_t numMeasures = 0;
+    uint16_t tempo = 0;
+    uint8_t swing = 0;
+    uint8_t stepsPerMeasure = 0;
+};
+
+constexpr auto kMeasureInfoSize = 0x08;
 
 struct MeasureInfo
 {
-    uint16_t tempo;
-    uint8_t step;
-    uint8_t _1[0x05];
-} __attribute__((packed));
+    uint16_t tempo = 0;
+    uint8_t steps = 0;
+};
+
+constexpr auto kNoteDataSize = 0x04;
 
 struct NoteData
 {
-    uint8_t length;
-    uint8_t velocity;
-    uint8_t noteId;
-    uint8_t startPoint;
-} __attribute__((packed));
+    uint8_t length = 0;
+    uint8_t velocity = 0;
+    int8_t pitch = 0;
+    uint8_t startPoint = 0;
+};
 
-struct BlockInfo
+struct Pattern
 {
-    uint8_t _1[0x02];
-    uint8_t blockLength;
-    uint8_t _2[0x01];
-} __attribute__((packed));
+    // Pattern stores *all* notes that are in the pattern, even ones that were
+    // later truncated by shortening the measure's steps.
+    // This must be cross-referenced with the measure's steps from its MeasureInfo
+    // entry to ensure only active notes are used.
+    std::vector<NoteData> notes;
+};
 
-struct TrackHeader
+struct Track
 {
-    BlockInfo blockInfo;
-    uint8_t measureNumber;
-    uint8_t trackNumber;
-    uint8_t numberOfNotes;
-    uint8_t _1[0x01];
-} __attribute__((packed));
-
-struct SongHeader
-{
-    Instrument instruments[kNumberOfInstruments];
-    uint8_t _1[0x08];
-    PlaybackInfo playbackInfo;
-    uint8_t _2[0x03];
-    ReverbInfo reverbInfo;
-    uint8_t _3[0x01];
-    DelayInfo delayInfo;
-    SceneState sceneState;
-    uint8_t _4[0x2D];
-    MasterInfo masterInfo;
-    uint8_t _5[0x06];
-    MeasureInfo measureInfo[kNumberOfMeasures];
-} __attribute__((packed));
+    Instrument instrument;
+    std::vector<std::optional<Pattern>> measures;
+};
 
 struct SongIdentifier
 {
     bool songHasData;
-    char name[0x08];
-    uint8_t _1[0x0F];
+    std::string name;
     uint32_t songStartAddress;
-    uint16_t songLength;
-    uint8_t _2[0x0A];
-} __attribute__((packed));
+    uint32_t songLength;
+};
 
-struct FileHeader
+enum class FXType : uint8_t
 {
-    uint8_t _1[0x04];
-    char signature[0x04];
-    uint8_t _2[0x04];
-    SongIdentifier songIdentifiers[kNumberOfSongs];
-} __attribute__((packed));
+    Delay = 0,
+    Reverb = 1,
+};
+
+struct SongData
+{
+    std::string name;
+    bool hasSolo = false;
+    FXType fxType = FXType::Delay;
+    bool locked = false;
+    uint8_t swing = 0;
+    ReverbInfo reverbInfo;
+    DelayInfo delayInfo;
+    MasterInfo masterInfo;
+    std::vector<MeasureInfo> measureInfos;
+    std::vector<Track> tracks;
+};
+
+struct SaveHeader
+{
+    const uint32_t checksum;
+    const std::string signature; // "M01W"
+    const uint32_t version;
+};
 
 #endif //SAVESTRUCTURE_H

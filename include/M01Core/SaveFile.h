@@ -5,16 +5,19 @@
 
 #ifndef SAVEFILE_H
 #define SAVEFILE_H
-#include "SaveStructure.h"
-#include "Song.h"
+
+#include <span>
+#include <cstddef>
+
+#include "M01Core/SaveStructure.h"
 
 class SaveFile
 {
     bool isValid = false;
-    std::vector<Song> songs;
+    std::vector<SongData> songs;
 
 public:
-    explicit SaveFile(FILE *saveFile);
+    explicit SaveFile(std::span<const std::byte> data);
 
     [[nodiscard]] bool IsValid() const;
 
@@ -23,7 +26,7 @@ public:
         return static_cast<int>(songs.size());
     }
 
-    [[nodiscard]] const std::vector<Song> &GetSongs() const
+    [[nodiscard]] const std::vector<SongData>& GetSongs() const
     {
         return songs;
     }

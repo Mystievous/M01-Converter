@@ -140,7 +140,7 @@ enum Bank : u8 {
     M1, K01W, EX
 };
 
-enum SubBank : u8 {
+enum Category : u8 {
     Keyboard, GuitarMallet, Bass, StringsPad, BrassReed, LeadSynth, PolySynth, SeOther, HitChord, DrumKit
 };
 
@@ -153,14 +153,14 @@ enum Scale : u8 {
 };
 
 enum DrumPattern : u8 {
-    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL, DandB, RandB, HIPHOP, PERC
+    EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL, DnB, RnB, HIPHOP, PERC
 };
 
 bitfield PlaybackBitfield {
     hasFX : 1 [[color("ff00ff")]];
     muted : 1 [[color("ff0000")]];
     soloed : 1 [[color("ffff00")]];
-    kaosKey : 5 [[color("00ffff")]];
+    kaosKey : 5 [[color("00ffff")]]; // 0-11 are C-B. Enums cannot be represented in bitfields
 };
 
 struct PlaybackState {
@@ -184,50 +184,50 @@ struct DrumInfo {
 
 struct Instrument {
     Bank bank [[color("dd00ff")]];
-    SubBank subBank [[color("ff8000")]];
+    Category category [[color("ff8000")]];
     match (bank) {
         (Bank::M1): {
-            match (subBank) {
-                (SubBank::Keyboard): M1Keyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): M1GuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): M1Bass program [[color("ffff00")]];
-                (SubBank::StringsPad): M1StringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): M1BrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): M1LeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): M1PolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): M1SeOther program [[color("ffff00")]];
-                (SubBank::HitChord): M1HitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): M1DrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): M1Keyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): M1GuitarMallet program [[color("ffff00")]];
+                (Category::Bass): M1Bass program [[color("ffff00")]];
+                (Category::StringsPad): M1StringsPad program [[color("ffff00")]];
+                (Category::BrassReed): M1BrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): M1LeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): M1PolySynth program [[color("ffff00")]];
+                (Category::SeOther): M1SeOther program [[color("ffff00")]];
+                (Category::HitChord): M1HitChord program [[color("ffff00")]];
+                (Category::DrumKit): M1DrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
         (Bank::K01W): {
-            match (subBank) {
-                (SubBank::Keyboard): K01WKeyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): K01WGuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): K01WBass program [[color("ffff00")]];
-                (SubBank::StringsPad): K01WStringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): K01WBrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): K01WLeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): K01WPolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): K01WSeOther program [[color("ffff00")]];
-                (SubBank::HitChord): K01WHitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): K01WDrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): K01WKeyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): K01WGuitarMallet program [[color("ffff00")]];
+                (Category::Bass): K01WBass program [[color("ffff00")]];
+                (Category::StringsPad): K01WStringsPad program [[color("ffff00")]];
+                (Category::BrassReed): K01WBrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): K01WLeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): K01WPolySynth program [[color("ffff00")]];
+                (Category::SeOther): K01WSeOther program [[color("ffff00")]];
+                (Category::HitChord): K01WHitChord program [[color("ffff00")]];
+                (Category::DrumKit): K01WDrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
         (Bank::EX): {
-            match (subBank) {
-                (SubBank::Keyboard): EXKeyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): EXGuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): EXBass program [[color("ffff00")]];
-                (SubBank::StringsPad): EXStringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): EXBrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): EXLeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): EXPolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): EXSeOther program [[color("ffff00")]];
-                (SubBank::HitChord): EXHitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): EXDrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): EXKeyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): EXGuitarMallet program [[color("ffff00")]];
+                (Category::Bass): EXBass program [[color("ffff00")]];
+                (Category::StringsPad): EXStringsPad program [[color("ffff00")]];
+                (Category::BrassReed): EXBrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): EXLeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): EXPolySynth program [[color("ffff00")]];
+                (Category::SeOther): EXSeOther program [[color("ffff00")]];
+                (Category::HitChord): EXHitChord program [[color("ffff00")]];
+                (Category::DrumKit): EXDrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
@@ -235,7 +235,7 @@ struct Instrument {
             u8 program [[color("ffff00")]];
         }
     }
-    KaosMode kaosMode [[color("BD3600")]]; // Copy of the one in the PlaybackState if
+    KaosMode kaosMode [[color("BD3600")]]; // Copy of the one in the PlaybackState, except MONO if it's a drum track.
     s8 kaosVariation [[color("850018")]];
     u8 attack [[color("2bff00")]]; // MIDI CC: 73
     u8 release [[color("00ffd9")]]; // MIDI CC: 72
@@ -245,7 +245,7 @@ struct Instrument {
     std::assert(
         (playbackState.kaosMode == KaosMode::DRUM) ||
         (playbackState.kaosMode == kaosMode),
-                std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, subBank, program, kaosMode, playbackState.kaosMode)
+        std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, category, program, kaosMode, playbackState.kaosMode)
     );
     // 12 drum samples, each with parameters
     DrumInfo drumInfo[12];
@@ -280,7 +280,7 @@ struct DelayInfo {
 };
 
 bitfield SceneState {
-    reverbOn : 1;
+    isReverbSelected : 1; // If false, then effect is Delay.
     unknown01 : 1;
     sceneLocked : 1;
     swing : 8;
@@ -394,13 +394,17 @@ struct SongData<auto Start, auto Length> {
     DelayInfo delayInfo;
     u8 unknown03[3] [[color("404040")]];
     SceneState sceneState [[color("fba6ff")]];
-    u8 unknown04[22] [[color("404040")]];
+    u8 unknown04[2] [[color("404040")]];
+    // The song name for factory songs, like Demo 2 and both Bonus tracks.
+    // Demo 1 doesn't have this field.
+    char factorySongName[8] [[color("ff00ff")]];
+    u8 unknown05[12] [[color("404040")]];
     char songLabel[4] [[color("0091ff")]];
     std::assert(songLabel == "song", "Song is missing data label");
     u64 songDataStart = $;
     u32 songDataLength [[color("c9c9c9")]]; // Includes the length value bytes
     u32 songDataVersion [[color("c371f0")]];
-    u8 unknown05[4] [[color("404040")]];
+    u8 unknown06[4] [[color("404040")]];
     Chunk chunks[while($ < Start + Length)];
     std::assert(Start + Length == songDataStart + songDataLength, "mismatch in song length values");
     std::assert($ == Start + Length, "song data did not end at the right length");
@@ -424,22 +428,36 @@ fn check_header_sum(u32 stored) {
     if (VALIDATE_CHECKSUMS) {
         // Sum of all bytes from immediately after the checksum u32 until
         // 0x1C4 (exclusive), which is where the block of \xFF starts.
-        computed = sum_range(0x04, 0x1C4);
+        computed = sum_range($ + 0x04, $ + 0x1C4);
         valid = stored == computed;
         std::assert_warn(valid, "header checksum mismatch");
     }
     return std::format("{:08X} {}", stored, valid ? "(OK)" : (VALIDATE_CHECKSUMS ? std::format("(BAD, want {:08X})", computed) : ""));
 };
-
 using HeaderChecksum = u32 [[format("check_header_sum")]];
 
-HeaderChecksum checksum @ 0x00 [[color("B52D1B")]];
+struct Header<auto ValidateChecksum, auto FollowSongs> {
+    if (ValidateChecksum) {
+        HeaderChecksum checksum [[color("B52D1B")]];
+    } else {
+        u32 checksum [[color("871E10")]];
+    }
+    char signature[4] [[color("0091ff")]];
+    std::assert(signature == "M01W", "Not a Korg M01 save file");
+    // always `4` for M01/NDS saves, and always `7` for M01D/3DS saves.
+    u32 version [[color("c371f0")]];
 
-char signature[4] @ 0x04 [[color("0091ff")]];
-std::assert(signature == "M01W", "Not a Korg M01 save file");
+    SongIdentifier<FollowSongs> songs[10];
 
-// Assuming this is a version tag, as it is always `4` for M01/NDS saves,
-// and always `7` for M01D/3DS saves.
-u32 version @ 0x08 [[color("c371f0")]];
+    // There's the exact amount of space needed for an "11th" song, but
+    // none in game. I'm assuming it's an unused slot.
+    SongIdentifier<false> unusedSlot;
+};
 
-SongIdentifier<true> songs[10] @ 0x0C;
+Header<true, true> header @ 0x00;
+
+// This is an almost direct copy of the header. Likely as a backup if the first one gets messed up.
+//
+// The only difference is that sometimes the checksum field reads ascii "BFBA", the same string that
+// shows up right before the start of the song data range.
+Header<false, false> copyHeader @ 0x0204;

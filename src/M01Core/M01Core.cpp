@@ -5,50 +5,35 @@
 
 #include "M01Core/M01Core.h"
 #include <stdexcept>
-#include <filesystem>
-#include <cstdio>
+#include <cstddef>
+
+#include "MidiExport.h"
+#include "M01Core/FileBytes.h"
 
 namespace M01Core
 {
-
-    std::vector<ConversionResult> ConvertSaveFile(const std::string &path, bool extended, const std::string &configPath)
+    std::vector<ConversionResult> ConvertSaveFile(const std::string& path, bool extended, const std::string& configPath)
     {
-        if (!std::filesystem::exists(path))
-        {
-            throw std::runtime_error("Input file does not exist: " + path);
-        }
+        const std::vector<std::byte> bytes = ReadWholeFile(path);
+        const SaveFile save(bytes);
 
-        FILE *f = fopen(path.c_str(), "rb");
-        if (!f)
-        {
-            throw std::runtime_error("Could not open file: " + path);
-        }
-
-        SaveFile save(f);
         if (!save.IsValid())
         {
-            fclose(f);
             throw std::runtime_error("Invalid save file: " + path);
         }
 
         std::vector<ConversionResult> results;
-        for (const auto &song : save.GetSongs())
+        for (const auto& song : save.GetSongs())
         {
             ConversionResult r;
-            r.name = song.identifier.name;
-            if (extended)
-            {
-                r.midi = &song.MakeExtendedMidiFile(configPath);
-            }
-            else
-            {
-                r.midi = &song.MakeMidiFile();
-            }
-            results.push_back(r);
+            r.name = song.name;
+            r.midi = extended
+                         ? MakeExtendedMidiFile(song, configPath)
+                         : MakeMidiFile(song);
+
+            results.push_back(std::move(r));
         }
 
-        fclose(f);
         return results;
     }
-
 } // namespace M01Core
