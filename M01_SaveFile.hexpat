@@ -394,13 +394,17 @@ struct SongData<auto Start, auto Length> {
     DelayInfo delayInfo;
     u8 unknown03[3] [[color("404040")]];
     SceneState sceneState [[color("fba6ff")]];
-    u8 unknown04[22] [[color("404040")]];
+    u8 unknown04[2] [[color("404040")]];
+    // The song name for factory songs, like Demo 2 and both Bonus tracks.
+    // Demo 1 doesn't have this field.
+    char factorySongName[8] [[color("ff00ff")]];
+    u8 unknown05[12] [[color("404040")]];
     char songLabel[4] [[color("0091ff")]];
     std::assert(songLabel == "song", "Song is missing data label");
     u64 songDataStart = $;
     u32 songDataLength [[color("c9c9c9")]]; // Includes the length value bytes
     u32 songDataVersion [[color("c371f0")]];
-    u8 unknown05[4] [[color("404040")]];
+    u8 unknown06[4] [[color("404040")]];
     Chunk chunks[while($ < Start + Length)];
     std::assert(Start + Length == songDataStart + songDataLength, "mismatch in song length values");
     std::assert($ == Start + Length, "song data did not end at the right length");
