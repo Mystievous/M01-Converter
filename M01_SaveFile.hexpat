@@ -140,7 +140,7 @@ enum Bank : u8 {
     M1, K01W, EX
 };
 
-enum SubBank : u8 {
+enum Category : u8 {
     Keyboard, GuitarMallet, Bass, StringsPad, BrassReed, LeadSynth, PolySynth, SeOther, HitChord, DrumKit
 };
 
@@ -184,50 +184,50 @@ struct DrumInfo {
 
 struct Instrument {
     Bank bank [[color("dd00ff")]];
-    SubBank subBank [[color("ff8000")]];
+    Category category [[color("ff8000")]];
     match (bank) {
         (Bank::M1): {
-            match (subBank) {
-                (SubBank::Keyboard): M1Keyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): M1GuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): M1Bass program [[color("ffff00")]];
-                (SubBank::StringsPad): M1StringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): M1BrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): M1LeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): M1PolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): M1SeOther program [[color("ffff00")]];
-                (SubBank::HitChord): M1HitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): M1DrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): M1Keyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): M1GuitarMallet program [[color("ffff00")]];
+                (Category::Bass): M1Bass program [[color("ffff00")]];
+                (Category::StringsPad): M1StringsPad program [[color("ffff00")]];
+                (Category::BrassReed): M1BrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): M1LeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): M1PolySynth program [[color("ffff00")]];
+                (Category::SeOther): M1SeOther program [[color("ffff00")]];
+                (Category::HitChord): M1HitChord program [[color("ffff00")]];
+                (Category::DrumKit): M1DrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
         (Bank::K01W): {
-            match (subBank) {
-                (SubBank::Keyboard): K01WKeyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): K01WGuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): K01WBass program [[color("ffff00")]];
-                (SubBank::StringsPad): K01WStringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): K01WBrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): K01WLeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): K01WPolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): K01WSeOther program [[color("ffff00")]];
-                (SubBank::HitChord): K01WHitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): K01WDrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): K01WKeyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): K01WGuitarMallet program [[color("ffff00")]];
+                (Category::Bass): K01WBass program [[color("ffff00")]];
+                (Category::StringsPad): K01WStringsPad program [[color("ffff00")]];
+                (Category::BrassReed): K01WBrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): K01WLeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): K01WPolySynth program [[color("ffff00")]];
+                (Category::SeOther): K01WSeOther program [[color("ffff00")]];
+                (Category::HitChord): K01WHitChord program [[color("ffff00")]];
+                (Category::DrumKit): K01WDrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
         (Bank::EX): {
-            match (subBank) {
-                (SubBank::Keyboard): EXKeyboard program [[color("ffff00")]];
-                (SubBank::GuitarMallet): EXGuitarMallet program [[color("ffff00")]];
-                (SubBank::Bass): EXBass program [[color("ffff00")]];
-                (SubBank::StringsPad): EXStringsPad program [[color("ffff00")]];
-                (SubBank::BrassReed): EXBrassReed program [[color("ffff00")]];
-                (SubBank::LeadSynth): EXLeadSynth program [[color("ffff00")]];
-                (SubBank::PolySynth): EXPolySynth program [[color("ffff00")]];
-                (SubBank::SeOther): EXSeOther program [[color("ffff00")]];
-                (SubBank::HitChord): EXHitChord program [[color("ffff00")]];
-                (SubBank::DrumKit): EXDrumKit program [[color("ffff00")]];
+            match (category) {
+                (Category::Keyboard): EXKeyboard program [[color("ffff00")]];
+                (Category::GuitarMallet): EXGuitarMallet program [[color("ffff00")]];
+                (Category::Bass): EXBass program [[color("ffff00")]];
+                (Category::StringsPad): EXStringsPad program [[color("ffff00")]];
+                (Category::BrassReed): EXBrassReed program [[color("ffff00")]];
+                (Category::LeadSynth): EXLeadSynth program [[color("ffff00")]];
+                (Category::PolySynth): EXPolySynth program [[color("ffff00")]];
+                (Category::SeOther): EXSeOther program [[color("ffff00")]];
+                (Category::HitChord): EXHitChord program [[color("ffff00")]];
+                (Category::DrumKit): EXDrumKit program [[color("ffff00")]];
                 (_): u8 program [[color("ffff00")]];
             }
         }
@@ -245,7 +245,7 @@ struct Instrument {
     std::assert(
         (playbackState.kaosMode == KaosMode::DRUM) ||
         (playbackState.kaosMode == kaosMode),
-        std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, subBank, program, kaosMode, playbackState.kaosMode)
+        std::format("{}::{}::{} : Kaos mode mismatch! header {}, body {}", bank, category, program, kaosMode, playbackState.kaosMode)
     );
     // 12 drum samples, each with parameters
     DrumInfo drumInfo[12];

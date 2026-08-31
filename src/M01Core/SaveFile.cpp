@@ -82,20 +82,31 @@ SaveFile::SaveFile(const std::span<const std::byte> data)
     {
         std::vector<SongIdentifier> songIdentifiers;
         songIdentifiers.reserve(kNumberOfSongs);
+        auto savedSongCount = 0;
         // Parse each stored song one at a time.
         for (int i = 0; i < kNumberOfSongs; ++i)
         {
             songIdentifiers.emplace_back(DecodeSongIdentifier(reader));
             const auto& songIdentifier = songIdentifiers.back();
 
-            std::cout << std::format("Song identifier: {}{}\n", songIdentifier.name,
-                                     songIdentifier.songHasData ? "" : ", no data!");
+            if (songIdentifier.songHasData)
+            {
+                savedSongCount++;
+            }
         }
+
+        songs = std::vector<SongData>{};
+        songs.reserve(savedSongCount);
 
         for (const auto& identifier : songIdentifiers)
         {
             if (!identifier.songHasData) continue;
-            DecodeSongData(reader, identifier);
+            // ReSharper disable once CppTooWideScopeInitStatement
+            const auto song = DecodeSongData(reader, identifier);
+            if (song.has_value())
+            {
+                songs.push_back(*song);
+            }
         }
     }
 }

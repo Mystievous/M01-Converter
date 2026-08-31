@@ -80,8 +80,8 @@ application.
 
 You can specify the following fields for each instrument:
 
-- `bank` - The bank number, 0-127
-- `subBank` - The sub-bank/"fine" bank number, 0-127
+- `bankMsb` - The MIDI MSB bank id, 0-127
+- `bankLsb` - The MIDI LSB bank id, 0-127
 - `program` - The program/patch number of the instrument, 0-127
 - `channel` - A specific MIDI channel to use for the instrument, 0-15
     - i.e. out of the 16 channels, Drums are on channel 10 for General MIDI; you can set this to 9 to use that channel.

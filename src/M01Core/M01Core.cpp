@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <cstddef>
 
+#include "MidiExport.h"
 #include "M01Core/FileBytes.h"
 
 namespace M01Core
@@ -25,16 +26,12 @@ namespace M01Core
         for (const auto& song : save.GetSongs())
         {
             ConversionResult r;
-            r.name = song.identifier.name;
-            if (extended)
-            {
-                // r.midi = &song.MakeExtendedMidiFile(configPath);
-            }
-            else
-            {
-                // r.midi = &song.MakeMidiFile();
-            }
-            results.push_back(r);
+            r.name = song.name;
+            r.midi = extended
+                         ? MakeExtendedMidiFile(song, configPath)
+                         : MakeMidiFile(song);
+
+            results.push_back(std::move(r));
         }
 
         return results;

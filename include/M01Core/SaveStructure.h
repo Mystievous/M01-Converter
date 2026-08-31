@@ -57,11 +57,16 @@ struct DrumInfo
     int8_t timestretch = 0;
 };
 
-struct Instrument
+struct InstrumentId
 {
     uint8_t bank = 0;
-    uint8_t subBank = 0;
+    uint8_t category = 0;
     uint8_t program = 0;
+};
+
+struct Instrument
+{
+    InstrumentId id;
     // Copy of the one in the PlaybackState, but MONO (0x00) if it's a drum track.
     KaosMode kaosModeCopy = KaosMode::MONO;
     int8_t kaosVariation = 0;
@@ -72,11 +77,6 @@ struct Instrument
     PlaybackState playbackState;
     std::vector<DrumInfo> drumInfo;
 };
-
-struct PlaybackInfo
-{
-    uint8_t hasSolo : 1;
-} __attribute__((packed));
 
 enum class ReverbType : uint8_t
 {
@@ -99,13 +99,6 @@ struct DelayInfo
     int8_t panRatio = 0;
     uint8_t feedback = 0;
     uint8_t level = 0;
-};
-
-struct SceneState
-{
-    bool reverbOn = false;
-    bool sceneLocked = false;
-    uint8_t swing = 0;
 };
 
 struct MasterInfo
@@ -145,38 +138,6 @@ struct Track
     Instrument instrument;
     std::vector<std::optional<Pattern>> measures;
 };
-
-struct BlockInfo
-{
-    uint8_t _1[0x02];
-    uint8_t blockLength;
-    uint8_t _2[0x01];
-} __attribute__((packed));
-
-struct TrackHeader
-{
-    BlockInfo blockInfo;
-    uint8_t measureNumber;
-    uint8_t trackNumber;
-    uint8_t numberOfNotes;
-    uint8_t _1[0x01];
-} __attribute__((packed));
-
-struct SongHeader
-{
-    Instrument instruments[kNumberOfInstruments];
-    uint8_t _1[0x08];
-    PlaybackInfo playbackInfo;
-    uint8_t _2[0x03];
-    ReverbInfo reverbInfo;
-    uint8_t _3[0x01];
-    DelayInfo delayInfo;
-    SceneState sceneState;
-    uint8_t _4[0x2D];
-    MasterInfo masterInfo;
-    uint8_t _5[0x06];
-    MeasureInfo measureInfo[kNumberOfMeasures];
-} __attribute__((packed));
 
 struct SongIdentifier
 {

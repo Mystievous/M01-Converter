@@ -16,8 +16,6 @@ FetchContent_MakeAvailable(midifile)
 
 add_library(M01Core
         M01Core.cpp
-        Song.cpp
-        Measure.cpp
         InstrumentHelper.cpp
         SaveFile.cpp
         FileBytes.cpp

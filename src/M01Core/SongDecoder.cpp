@@ -97,8 +97,15 @@ static bool CheckSongDataVersion(const uint32_t version)
 static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& identifier)
 {
     const auto bank = reader.Read<uint8_t>();
-    const auto subBank = reader.Read<uint8_t>();
+    const auto category = reader.Read<uint8_t>();
     const auto program = reader.Read<uint8_t>();
+
+    const auto id = InstrumentId{
+        .bank = bank,
+        .category = category,
+        .program = program
+    };
+
     const auto kaosModeCopy = static_cast<KaosMode>(reader.Read<uint8_t>());
     const auto kaosVariation = reader.Read<int8_t>();
     const auto attack = reader.Read<uint8_t>();
@@ -107,22 +114,13 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
     const auto panning = reader.Read<int8_t>();
 
     const auto instrumentHelper = InstrumentHelper{};
-    const auto instrumentName = instrumentHelper.GetInstrumentName(bank, subBank, program);
-
-    std::cout << std::format("{}: {} - {} - {}\n", identifier.name, instrumentName.bank, instrumentName.subBank,
-                             instrumentName.program);
-    std::cout << std::format("  Kaos Mode Copy: {}, Kaos Variation: {}\n", ToString(kaosModeCopy),
-                             kaosVariation);
-    std::cout << std::format("  Attack: {}, Release: {}, Volume: {}, Panning: {}\n", attack, release, volume, panning);
+    const auto instrumentName = instrumentHelper.GetInstrumentName(id);
 
     const auto playbackByte = reader.Read<uint8_t>();
     const auto hasFX = bits::Get<0, 1>(playbackByte);
     const auto muted = bits::Get<1, 1>(playbackByte);
     const auto soloed = bits::Get<2, 1>(playbackByte);
     const auto kaosKey = static_cast<Key>(bits::Get<3, 5>(playbackByte));
-
-    std::cout << std::format("  hasFX: {}, muted: {}, soloed: {}, kaosKey: {}\n", hasFX, muted, soloed,
-                             ToString(kaosKey));
 
     const auto kaosScale = static_cast<Scale>(reader.Read<uint8_t>());
     const auto kaosDrumPattern = static_cast<DrumPattern>(reader.Read<uint8_t>());
@@ -133,7 +131,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
     if (kaosMode != KaosMode::DRUM && kaosMode != kaosModeCopy)
     {
         std::cerr << std::format("Song {} instrument {} - {} - {} has mismatched kaos modes.\n", identifier.name,
-                                 instrumentName.bank, instrumentName.subBank, instrumentName.program);
+                                 instrumentName.bank, instrumentName.category, instrumentName.program);
     }
 
     const auto playbackState = PlaybackState{
@@ -147,12 +145,6 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
         .keyboardOctave = keyboardOctave
     };
 
-    std::cout << std::format("  kaosScale: {}, kaosDrumPattern: {}, kaosMode: {}, keyboardOctave: {}\n",
-                             ToString(kaosScale), ToString(kaosDrumPattern), ToString(kaosMode),
-                             keyboardOctave);
-
-    std::cout << "  Drum Samples:" << std::endl;
-
     auto drumInfos = std::vector<DrumInfo>{};
     drumInfos.reserve(kNumberOfDrumSamples);
     for (int i = 0; i < kNumberOfDrumSamples; ++i)
@@ -164,18 +156,12 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
         const auto sampleTimestretch = reader.Read<int8_t>();
 
         drumInfos.emplace_back(sampleLevel, samplePanning, sampleTimestretch);
-
-        std::cout << std::format("  {}:\n", i);
-        std::cout << std::format("    level: {}, panning: {}, timestretch: {}\n", sampleLevel, samplePanning,
-                                 sampleTimestretch);
     }
 
     reader.Skip(0x11);
 
     return {
-        .bank = bank,
-        .subBank = subBank,
-        .program = program,
+        .id = id,
         .kaosModeCopy = kaosModeCopy,
         .kaosVariation = kaosVariation,
         .attack = attack,
@@ -324,13 +310,11 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                     identifier.name, numTracks, kNumberOfInstruments
                 );
             }
-            std::cout << std::format(
-                "Number of Tracks: {}\nNumber of Measures: {}\nTempo: {}\nSwing: {}\nSteps Per Measure: {}\n",
-                numTracks, numMeasures, tempo, masterSwing, stepsPerMeasure);
 
             // MasterInfo comes before tracks in all 3DS and NDS saves.
             // If it comes afterwards, tracks processed before it will be cleared.
             tracks.assign(numTracks, Track{
+                              .instrument = {},
                               .measures = std::vector<std::optional<Pattern>>(numMeasures)
                           });
 
@@ -481,7 +465,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
         if (chunkTag == Tag::End) break;
 
-        // std::cout << std::endl;
     }
     if (reader.Position() != songEndAddress)
     {

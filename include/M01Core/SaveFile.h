@@ -9,12 +9,12 @@
 #include <span>
 #include <cstddef>
 
-#include "Song.h"
+#include "M01Core/SaveStructure.h"
 
 class SaveFile
 {
     bool isValid = false;
-    std::vector<Song> songs;
+    std::vector<SongData> songs;
 
 public:
     explicit SaveFile(std::span<const std::byte> data);
@@ -26,7 +26,7 @@ public:
         return static_cast<int>(songs.size());
     }
 
-    [[nodiscard]] const std::vector<Song>& GetSongs() const
+    [[nodiscard]] const std::vector<SongData>& GetSongs() const
     {
         return songs;
     }
