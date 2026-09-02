@@ -23,7 +23,12 @@ add_library(M01Core
         MidiExport.cpp
 )
 
-target_compile_options(M01Core PRIVATE -Wall -Wextra)
+if (MSVC)
+    target_compile_options(M01Core PRIVATE /W4)
+else ()
+    target_compile_options(M01Core PRIVATE -Wall -Wextra)
+endif ()
+
 target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)
 target_include_directories(M01Core PUBLIC ${midifile_SOURCE_DIR}/include)
 target_include_directories(M01Core
