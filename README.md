@@ -8,8 +8,8 @@ It has two modes of running:
 1. Matching the MIDI export feature of the 3DS version of the app
     - Verified byte-for-byte identical to native 3DS exports, including full-length built-in demo songs.
 
-2. An export with "extended" features, such as automatically setting Patch Changes, and many other CC messages like
-   Volume and Pan.
+2. An export with "extended" features, such as automatically setting time signatures, along with patch changes and many
+   other CC messages like volume and pan.
 
 Thank you to [f4mi](https://bsky.app/profile/f4mi.bsky.social) for the inspiration, go check
 out [their video on the topic](https://www.youtube.com/watch?v=7ptN-3RT8yA)!
@@ -69,8 +69,15 @@ the following features:
   executable.
     - This can be specified to a custom path with `--config [path]` or `-c [path]`.
     - A sample config file is included in the `template` directory, [config.yml](template/config.yml).
-        - I have mapped this one to the General MIDI patch list, based on what I felt was close enough to the original
-          sounds from the ones included in the Microsoft GS Wavetable Synth.
+        - I have mapped this sample one to the General MIDI patch list, based on what I felt was close enough to the
+          original sounds from the ones included in the Microsoft GS Wavetable Synth.
+- Time signatures are created depending on each pattern/measure's set step count. Without them, DAWs assume 4/4 and
+  measures don't line up with the save file.
+    - They are simplified per-pattern into the smallest denominator that fits a time signature, without going longer
+      than quarter notes.
+        - i.e. an 18 step measure will be 9/8, and 20 steps will be 5/4, but 24 steps will be 6/4 instead of 3/2.
+    - Patterns that have a step count that is a multiple of 16 (four quarter notes) get simplified to multiple 4/4
+      measures.
 - Each instrument's track is given a name of the Bank (i.e. "M1", "01/W", "EX"), and the Patch Name (i.e. "Piano1",
   "A.Bass", "Trumpet") as specified in the config file.
     - i.e. "EX - HiResoLead"

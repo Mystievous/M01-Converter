@@ -7,6 +7,8 @@
 
 #include <format>
 #include <iostream>
+#include <optional>
+#include <utility>
 
 #include "M01Core/InstrumentHelper.h"
 #include "M01Core/SaveStructure.h"
@@ -125,6 +127,55 @@ static void AddTempoChanges(smf::MidiFile& midiFile, const SongData& song, const
             currentTempo = measureTempo;
             midiFile.addTempo(kMetaTrackIndex, measureStartTicks[i], measureTempo);
         }
+    }
+}
+
+static void AddTimeSignatureChanges(smf::MidiFile& midiFile, const std::vector<int>& measureStepCounts,
+                                    const std::vector<int>& measureStartTicks)
+{
+    std::optional<std::pair<int, int>> currentSignature;
+
+    for (int i = 0; i < static_cast<int>(measureStepCounts.size()); ++i)
+    {
+        const auto measureStepCount = measureStepCounts[i];
+        const auto measureStartTick = measureStartTicks[i];
+
+        auto top = measureStepCount;
+        auto bottom = 16;
+
+        if (top % 4 == 0)
+        {
+            top /= 4;
+            bottom /= 4;
+        }
+        else if (top % 2 == 0)
+        {
+            top /= 2;
+            bottom /= 2;
+        }
+
+        // Sets of 4 quarters can be divided into measures of 4/4.
+        if (top % 4 == 0)
+        {
+            top = 4;
+            bottom = 4;
+        }
+
+        const auto signature = std::pair(top, bottom);
+
+        if (currentSignature == signature)
+        {
+            continue;
+        }
+
+        midiFile.addTimeSignature(
+            kMetaTrackIndex,
+            measureStartTick,
+            top,
+            bottom
+        );
+
+        currentSignature = signature;
     }
 }
 
@@ -338,6 +389,7 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
     const auto measureStartTicks = MeasureStartTicks(song, measureStepCounts);
 
     AddTempoChanges(midiFile, song, measureStartTicks);
+    AddTimeSignatureChanges(midiFile, measureStepCounts, measureStartTicks);
 
     for (int t = 0; t < static_cast<int>(song.tracks.size()); ++t)
     {
