@@ -7,12 +7,14 @@
 #include <stdexcept>
 #include <cstddef>
 
-#include "MidiExport.h"
+#include "M01Core/MidiExport.h"
+#include "M01Core/SaveFile.h"
 #include "M01Core/FileBytes.h"
 
 namespace M01Core
 {
-    std::vector<ConversionResult> ConvertSaveFile(const std::string& path, bool extended, const std::string& configPath)
+    std::vector<ConversionResult> ConvertSaveFile(const std::string& path, const bool extended,
+                                                  const std::string& configPath)
     {
         const std::vector<std::byte> bytes = ReadWholeFile(path);
         const SaveFile save(bytes);

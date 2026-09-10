@@ -87,9 +87,8 @@ SaveFile::SaveFile(const std::span<const std::byte> data)
         for (int i = 0; i < kNumberOfSongs; ++i)
         {
             songIdentifiers.emplace_back(DecodeSongIdentifier(reader));
-            const auto& songIdentifier = songIdentifiers.back();
 
-            if (songIdentifier.songHasData)
+            if (const auto& songIdentifier = songIdentifiers.back(); songIdentifier.songHasData)
             {
                 savedSongCount++;
             }

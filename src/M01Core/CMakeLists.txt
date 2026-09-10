@@ -34,5 +34,4 @@ target_include_directories(M01Core PUBLIC ${midifile_SOURCE_DIR}/include)
 target_include_directories(M01Core
         PUBLIC
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/include/M01Core
 )
