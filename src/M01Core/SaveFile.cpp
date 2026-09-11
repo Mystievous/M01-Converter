@@ -17,9 +17,7 @@
 #include "M01Core/ByteReader.h"
 
 constexpr std::string_view kFileSignature = "M01W";
-constexpr uint32_t kSaveVersionsDS[] = {
-    0x04
-};
+constexpr uint32_t kSaveVersionsDS[] = {0x04};
 
 static SongIdentifier DecodeSongIdentifier(ByteReader& reader)
 {
@@ -40,7 +38,7 @@ static SongIdentifier DecodeSongIdentifier(ByteReader& reader)
         .songHasData = songHasData,
         .name = name,
         .songStartAddress = songStartAddress,
-        .songLength = songLength
+        .songLength = songLength,
     };
 }
 
@@ -62,11 +60,10 @@ SaveFile::SaveFile(const std::span<const std::byte> data)
 
     // Checks the header's checksum. The first four bytes of the save file (u32) should be the value of all other bytes
     // in the header area added together/summed.
-    if (const auto sum = reader.SumBytes(0x04, 0x1C4 - 0x04);
-        checksum != sum)
+    if (const auto sum = reader.SumBytes(0x04, 0x1C4 - 0x04); checksum != sum)
     {
-        std::cerr << std::format("Header checksum mismatch. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
-                                 checksum, sum);
+        std::cerr << std::format("Header checksum mismatch. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n", checksum,
+                                 sum);
         isValid = false;
     }
 
@@ -99,7 +96,8 @@ SaveFile::SaveFile(const std::span<const std::byte> data)
 
         for (const auto& identifier : songIdentifiers)
         {
-            if (!identifier.songHasData) continue;
+            if (!identifier.songHasData)
+                continue;
             // ReSharper disable once CppTooWideScopeInitStatement
             const auto song = DecodeSongData(reader, identifier);
             if (song.has_value())

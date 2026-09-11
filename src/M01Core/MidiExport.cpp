@@ -168,12 +168,7 @@ static void AddTimeSignatureChanges(smf::MidiFile& midiFile, const std::vector<i
             continue;
         }
 
-        midiFile.addTimeSignature(
-            kMetaTrackIndex,
-            measureStartTick,
-            top,
-            bottom
-        );
+        midiFile.addTimeSignature(kMetaTrackIndex, measureStartTick, top, bottom);
 
         currentSignature = signature;
     }
@@ -223,9 +218,8 @@ smf::MidiFile MakeMidiFile(const SongData& song)
                     }
 
                     const auto startTime = TicksWithSwing(song.swing, startPoint * kTicksPerStep) + measureStartTick;
-                    const auto endTime =
-                        TicksWithSwing(song.swing, (startPoint * 4 + length + 1) * kTicksPerSubStep)
-                        + measureStartTick - kNoteEndPadding;
+                    const auto endTime = TicksWithSwing(song.swing, (startPoint * 4 + length + 1) * kTicksPerSubStep)
+                                         + measureStartTick - kNoteEndPadding;
 
                     const auto trackId = t + 1;
                     const auto channelId = t;
@@ -258,7 +252,7 @@ namespace
         std::optional<uint8_t> bankLsb;
         std::optional<uint8_t> program;
     };
-}
+} // namespace
 
 smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& configPath)
 {
@@ -294,7 +288,7 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
             .channel = config.channel.value_or(channel),
             .bankMsb = config.bankMsb,
             .bankLsb = config.bankLsb,
-            .program = config.program
+            .program = config.program,
         };
 
         for (const auto& comparePlayback : playbacks)
@@ -304,8 +298,7 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
 
             std::cerr << std::format(
                 "Song {}, Track {} has the same MIDI channel as Track {}. Any patch or mix settings may get mixed.\n",
-                song.name, playback.track, comparePlayback.track
-            );
+                song.name, playback.track, comparePlayback.track);
         }
 
         configs.push_back(std::move(config));
@@ -324,65 +317,28 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
             }
             else
             {
-                midiFile.addController(
-                    playback.track,
-                    0,
-                    playback.channel,
-                    kCcBankMsb,
-                    playback.bankMsb.value_or(0)
-                );
-                midiFile.addController(
-                    playback.track,
-                    0,
-                    playback.channel,
-                    kCcBankLsb,
-                    playback.bankLsb.value_or(0)
-                );
+                midiFile.addController(playback.track, 0, playback.channel, kCcBankMsb, playback.bankMsb.value_or(0));
+                midiFile.addController(playback.track, 0, playback.channel, kCcBankLsb, playback.bankLsb.value_or(0));
             }
         }
         if (playback.program.has_value())
         {
-            midiFile.addPatchChange(
-                playback.track,
-                0,
-                playback.channel,
-                *playback.program
-            );
+            midiFile.addPatchChange(playback.track, 0, playback.channel, *playback.program);
         }
 
         // CC Pan: DS Save File stores pan as -5 to 5.
-        midiFile.addController(
-            playback.track,
-            0,
-            playback.channel,
-            kCcPan,
-            InstrumentHelper::MapRange(instrument.panning, -5, 5, 0, 127));
+        midiFile.addController(playback.track, 0, playback.channel, kCcPan,
+                               InstrumentHelper::MapRange(instrument.panning, -5, 5, 0, 127));
         // CC Volume: DS Save File stores volume as 0 to 127.
-        midiFile.addController(
-            playback.track,
-            0,
-            playback.channel,
-            kCcVolume,
-            instrument.volume
-        );
+        midiFile.addController(playback.track, 0, playback.channel, kCcVolume, instrument.volume);
 
         // CC Attack: DS Save File stores attack as 0 to 15.
-        midiFile.addController(
-            playback.track,
-            0,
-            playback.channel,
-            kCcAttack,
-            InstrumentHelper::MapRange(instrument.attack, 0, 15, 0, 127)
-        );
+        midiFile.addController(playback.track, 0, playback.channel, kCcAttack,
+                               InstrumentHelper::MapRange(instrument.attack, 0, 15, 0, 127));
 
         // CC Release: DS Save File stores release as 0 to 15.
-        midiFile.addController(
-            playback.track,
-            0,
-            playback.channel,
-            kCcRelease,
-            InstrumentHelper::MapRange(instrument.release, 0, 15, 0, 127)
-        );
+        midiFile.addController(playback.track, 0, playback.channel, kCcRelease,
+                               InstrumentHelper::MapRange(instrument.release, 0, 15, 0, 127));
     }
 
     const auto measureStepCounts = MeasureStepCounts(song);
@@ -416,7 +372,7 @@ smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& conf
 
                     const auto startTime = TicksWithSwing(song.swing, startPoint * kTicksPerStep) + measureStartTick;
                     const auto endTime = TicksWithSwing(song.swing, (startPoint * 4 + length + 1) * kTicksPerSubStep)
-                        + measureStartTick - kNoteEndPadding;
+                                         + measureStartTick - kNoteEndPadding;
 
                     const auto remappedPitch = InstrumentHelper::RemapNoteNumber(config, pitch);
 

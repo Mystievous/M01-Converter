@@ -49,9 +49,8 @@ int main(const int argc, char** argv)
         }
         // Use the M01Core library API
         const bool extendedMode = result.count("extended") != 0;
-        const std::string configPath = result.count("config")
-                                           ? result["config"].as<std::string>()
-                                           : std::string("config.yml");
+        const std::string configPath =
+            result.count("config") ? result["config"].as<std::string>() : std::string("config.yml");
 
         auto results = M01Core::ConvertSaveFile(inputPath, extendedMode, configPath);
         std::cout << "Found " << results.size() << " songs." << std::endl;

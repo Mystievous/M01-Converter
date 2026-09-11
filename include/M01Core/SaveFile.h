@@ -21,15 +21,9 @@ public:
 
     [[nodiscard]] bool IsValid() const;
 
-    [[nodiscard]] int GetNumberOfSongs() const
-    {
-        return static_cast<int>(songs.size());
-    }
+    [[nodiscard]] int GetNumberOfSongs() const { return static_cast<int>(songs.size()); }
 
-    [[nodiscard]] const std::vector<SongData>& GetSongs() const
-    {
-        return songs;
-    }
+    [[nodiscard]] const std::vector<SongData>& GetSongs() const { return songs; }
 };
 
 #endif // SAVEFILE_H
