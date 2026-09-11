@@ -259,6 +259,16 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
     reader.Skip(0x0C);
 
+    if (songFormat == M01D)
+    {
+        const auto v5_marker = reader.ReadString(4);
+        if (v5_marker != kSongMarker)
+        {
+            std::cerr << std::format("V5 song marker for {} is not `song`, instead: {}\n", identifier.name, v5_marker);
+        }
+        reader.Skip(0x08);
+    }
+
     const auto marker = reader.ReadString(4);
 
     if (marker != kSongMarker)
