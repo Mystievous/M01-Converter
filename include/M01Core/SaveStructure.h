@@ -180,4 +180,4 @@ struct SaveHeader
     const uint32_t version;
 };
 
-#endif //SAVESTRUCTURE_H
+#endif // SAVESTRUCTURE_H

@@ -23,6 +23,6 @@ namespace bits
             return static_cast<T>(field);
         }
     }
-}
+} // namespace bits
 
-#endif //M01_CONVERTER_BITS_H
+#endif // M01_CONVERTER_BITS_H

@@ -16,24 +16,10 @@
 constexpr int kNumberOfBanks = 3;
 constexpr int kNumberOfSubBanks = 10;
 
-constexpr std::string kBankNames[] = {
-    "M1",
-    "01/W",
-    "EX"
-};
+constexpr std::string kBankNames[] = {"M1", "01/W", "EX"};
 
-constexpr std::string kSubBankNames[] = {
-    "Keyboard",
-    "Guitar/Mallet",
-    "Bass",
-    "Strings/Pad",
-    "Brass/Reed",
-    "Lead Synth",
-    "Poly Synth",
-    "SE/Other",
-    "Hit/Chord",
-    "Drum Kit"
-};
+constexpr std::string kSubBankNames[] = {"Keyboard",   "Guitar/Mallet", "Bass",     "Strings/Pad", "Brass/Reed",
+                                         "Lead Synth", "Poly Synth",    "SE/Other", "Hit/Chord",   "Drum Kit"};
 
 struct InstrumentName
 {
@@ -69,8 +55,7 @@ public:
 
     [[nodiscard]] InstrumentConfig GetInstrumentConfig(InstrumentId id) const;
 
-    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string& bankName,
-                                                       const std::string& categoryName,
+    [[nodiscard]] InstrumentConfig GetInstrumentConfig(const std::string& bankName, const std::string& categoryName,
                                                        const std::string& programName) const;
 
     static uint8_t RemapNoteNumber(const InstrumentConfig& instrumentConfig, int pitch);
