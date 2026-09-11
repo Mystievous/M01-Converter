@@ -55,10 +55,10 @@ Or, if you want to use the extended export, make sure the config.yml is next to 
   below.
     - You can see the full information that is read in the [SaveStructure.h](include/M01Core/SaveStructure.h) file.
     - You can also find my original pattern script for [ImHex](https://github.com/WerWolv/ImHex) that I used to reverse
-      engineer the save file format at [M01_SaveFile.hexpat](M01_SaveFile.hexpat), which can be used to inspect your own
-      save file in detail. As far as I can tell, almost everything in the save file is defined in there. There are still
-      fields marked "unknown", but only a few ever have data in them, which doesn't seem to be a functional result of
-      song data you can change in the app.
+      engineer the save file format at [M01_SaveFile.hexpat](hexpats/patterns/M01_SaveFile.hexpat), which can be used to
+      inspect your own save file in detail. As far as I can tell, almost everything in the save file is defined in
+      there. There are still fields marked "unknown", but only a few ever have data in them, which doesn't seem to be a
+      functional result of song data you can change in the app.
 
 ### Extended Export
 
