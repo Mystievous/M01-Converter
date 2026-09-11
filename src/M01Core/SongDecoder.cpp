@@ -15,6 +15,8 @@
 
 #include "M01Core/Bits.h"
 #include "M01Core/InstrumentHelper.h"
+#include "M01Core/SaveStructure.h"
+#include "M01Core/SongFile.h"
 
 static constexpr std::string_view ToString(const KaosMode kaosMode)
 {
@@ -73,24 +75,22 @@ static constexpr std::string_view ToString(const ReverbType reverbType)
     return "UNKNOWN";
 }
 
-constexpr std::string_view kSongLabel = "song";
-constexpr uint32_t kSongVersionsDS[] = {0x04};
+constexpr uint32_t kM01SongVersion = 0x04;
+constexpr uint32_t kM01DSongVersion = 0x05;
 
-constexpr uint32_t kSongDataVersionsDS[] = {0x01};
-
-static bool CheckSongVersion(const uint32_t version)
+namespace
 {
-    const auto foundVersion = std::ranges::find(kSongVersionsDS, version);
-    return foundVersion != std::end(kSongVersionsDS);
+    enum SongFormat
+    {
+        M01,
+        M01D
+    };
 }
 
-static bool CheckSongDataVersion(const uint32_t version)
-{
-    const auto foundVersion = std::ranges::find(kSongDataVersionsDS, version);
-    return foundVersion != std::end(kSongDataVersionsDS);
-}
+// Song data version did not change between M01 and M01D
+constexpr uint32_t kSongDataVersion = 0x01;
 
-static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& identifier)
+static Instrument DecodeInstrument(ByteReader& reader, const SongSource& source)
 {
     const auto bank = reader.Read<uint8_t>();
     const auto category = reader.Read<uint8_t>();
@@ -125,7 +125,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
     {
         const auto instrumentHelper = InstrumentHelper{};
         const auto instrumentName = instrumentHelper.GetInstrumentName(id);
-        std::cerr << std::format("Song {} instrument {} - {} - {} has mismatched kaos modes.\n", identifier.name,
+        std::cerr << std::format("Song {} instrument {} - {} - {} has mismatched kaos modes.\n", source.name,
                                  instrumentName.bank, instrumentName.category, instrumentName.program);
     }
 
@@ -179,25 +179,37 @@ namespace
     };
 }
 
-std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier)
+std::optional<SongData> DecodeSongData(ByteReader& reader, const SongSource& source, uint32_t startAddress)
 {
-    reader.Seek(identifier.songStartAddress);
+    reader.Seek(startAddress);
     const auto songChecksum = reader.Read<uint32_t>();
 
-    const auto calculatedChecksum = reader.SumBytes(identifier.songStartAddress + 0x04, identifier.songLength - 0x04);
-    if (songChecksum != calculatedChecksum)
+    if (source.songLength.has_value())
     {
-        std::cerr << std::format("Song checksum mismatch for {}. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
-                                 identifier.name, songChecksum, calculatedChecksum);
+        const auto calculatedChecksum = reader.SumBytes(*source.songLength - 0x04, startAddress + 0x04);
+        if (songChecksum != calculatedChecksum)
+        {
+            std::cerr << std::format("Song checksum mismatch for {}. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
+                                     source.name, songChecksum, calculatedChecksum);
+        }
     }
 
-    // ReSharper disable once CppTooWideScopeInitStatement
     const auto songVersion = reader.Read<uint32_t>();
 
-    if (!CheckSongVersion(songVersion))
+    SongFormat songFormat = M01;
+
+    if (songVersion == kM01SongVersion)
     {
-        std::cerr << std::format("Song {} has an unsupported song version, {}. Attempting to parse anyways.\n",
-                                 identifier.name, songVersion);
+        songFormat = M01;
+    }
+    else if (songVersion == kM01DSongVersion)
+    {
+        songFormat = M01D;
+    }
+    else
+    {
+        std::cerr << std::format("Song {} has an unsupported song version, {}. Skipping\n", source.name, songVersion);
+        return std::nullopt;
     }
 
     std::vector<Instrument> instruments;
@@ -205,7 +217,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
     for (int i = 0; i < kNumberOfInstruments; ++i)
     {
-        instruments.emplace_back(DecodeInstrument(reader, identifier));
+        instruments.emplace_back(DecodeInstrument(reader, source));
     }
 
     const auto hasSolo = bits::Get<0, 1>(reader.Read<uint8_t>());
@@ -242,30 +254,61 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     const auto locked = bits::Get<2, 1>(sceneBytes);
     const uint8_t swing = bits::Get<3, 8>(sceneBytes);
 
-    reader.Skip(0x16);
+    reader.Skip(0x02);
 
-    if (const auto label = reader.ReadString(4); label != kSongLabel)
+    const auto sourceSongName = reader.ReadString(8);
+
+    reader.Skip(0x0C);
+
+    if (songFormat == M01D)
     {
-        std::cerr << std::format("Song label for {} is not `song`, instead: {}\n", identifier.name, label);
+        const auto v5_marker = reader.ReadString(4);
+        if (v5_marker != kSongMarker)
+        {
+            std::cerr << std::format("V5 song marker for {} is not `song`, instead: {}\n", source.name, v5_marker);
+        }
+        reader.Skip(0x08);
+    }
+
+    const auto marker = reader.ReadString(4);
+
+    if (marker != kSongMarker)
+    {
+        std::cerr << std::format("Song marker for {} is not `song`, instead: {}\n", source.name, marker);
     }
 
     const auto songDataStart = reader.Position();
     const auto songDataLength = reader.Read<uint32_t>(); // Length includes its own bytes
-    // ReSharper disable once CppTooWideScopeInitStatement
     const auto songDataVersion = reader.Read<uint32_t>();
 
-    if (!CheckSongDataVersion(songDataVersion))
+    if (songDataVersion != kSongDataVersion)
     {
-        std::cerr << std::format("Song {} has an unsupported song data version, {}. Attempting to parse anyways.\n",
-                                 identifier.name, songDataVersion);
+        std::cerr << std::format("Song {} has an unsupported song data version, {}. Skipping...\n", source.name,
+                                 songDataVersion);
+        return std::nullopt;
     }
 
-    const auto songEndAddress = identifier.songStartAddress + identifier.songLength;
+    const auto songEndAddress = songDataStart + songDataLength;
 
-    if (songEndAddress != songDataStart + songDataLength)
+    if (source.songLength.has_value())
     {
-        std::cerr << std::format("Mismatch in song length values for song {}. File Header: 0x{:X}, Song Data: 0x{:X}\n",
-                                 identifier.name, songEndAddress, songDataStart + songDataLength);
+        if (songEndAddress != startAddress + *source.songLength)
+        {
+            std::cerr << std::format(
+                "Mismatch in song length values for song {}. File Header: 0x{:X}, Song Data: 0x{:X}\n", source.name,
+                songEndAddress, songDataStart + songDataLength);
+        }
+    }
+    else
+    {
+        // If songLength is not set, checksum was not verified at the start.
+        // Only now can it be done, since we know where the song data ends.
+        const auto calculatedChecksum = reader.SumBytes(songEndAddress - startAddress - 0x04, startAddress + 0x04);
+        if (songChecksum != calculatedChecksum)
+        {
+            std::cerr << std::format("Song checksum mismatch for {}. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
+                                     source.name, songChecksum, calculatedChecksum);
+        }
     }
 
     reader.Skip(0x04);
@@ -286,7 +329,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (masterInfo.has_value())
             {
                 std::cerr << std::format(
-                    "Found more than one Master Info block in song {}. Overwriting previous ones.\n", identifier.name);
+                    "Found more than one Master Info block in song {}. Overwriting previous ones.\n", source.name);
             }
             const auto numTracks = reader.Read<uint8_t>();
             const auto numMeasures = reader.Read<uint8_t>();
@@ -298,7 +341,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (numTracks > kNumberOfInstruments)
             {
                 std::cerr << std::format("Number of tracks exceeds the maximum for song {}. Value: {}, Maximum: {}\n",
-                                         identifier.name, numTracks, kNumberOfInstruments);
+                                         source.name, numTracks, kNumberOfInstruments);
             }
 
             // MasterInfo comes before tracks in all 3DS and NDS saves.
@@ -327,14 +370,14 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (measures.has_value())
             {
                 std::cerr << std::format(
-                    "Found more than one Measure Info block in song {}. Overwriting previous ones.\n", identifier.name);
+                    "Found more than one Measure Info block in song {}. Overwriting previous ones.\n", source.name);
             }
             const auto measureCount = chunkLength / kMeasureInfoSize;
             if (chunkLength % kMeasureInfoSize != 0)
             {
                 std::cerr << std::format("MeasureInfo chunk length is not a multiple of the defined size for song {}. "
                                          "Length: {}, Defined Size: {}\n",
-                                         identifier.name, chunkLength, kMeasureInfoSize);
+                                         source.name, chunkLength, kMeasureInfoSize);
                 reader.Seek(chunkEnd);
             }
             else
@@ -345,14 +388,14 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                     {
                         std::cerr << std::format("Calculated measure info count does not match Master Info for song "
                                                  "{}. Calculated: {}, Stored: {}\n",
-                                                 identifier.name, measureCount, masterInfo->numMeasures);
+                                                 source.name, measureCount, masterInfo->numMeasures);
                     }
                 }
                 else
                 {
                     std::cerr << std::format("MeasureInfo block found before MasterInfo for song {}. Automatically "
                                              "deriving from chunk length, value: {}\n",
-                                             identifier.name, measureCount);
+                                             source.name, measureCount);
                 }
 
                 measures = std::vector<MeasureInfo>{};
@@ -372,7 +415,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (!masterInfo.has_value())
             {
                 std::cerr << std::format("PatternData block found before MasterInfo for song {}. Skipping.\n",
-                                         identifier.name);
+                                         source.name);
                 reader.Seek(chunkEnd);
             }
             else
@@ -380,25 +423,24 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 const auto measureNumber = reader.Read<uint8_t>();
                 const auto trackNumber = reader.Read<uint8_t>();
                 const auto numberOfNotes = reader.Read<uint16_t>();
-
                 if (measureNumber >= masterInfo->numMeasures)
                 {
                     std::cerr << std::format(
-                        "In song {}, pattern at 0x{:X} has invalid measure number, {}. Skipping.\n", identifier.name,
+                        "In song {}, pattern at 0x{:X} has invalid measure number, {}. Skipping.\n", source.name,
                         chunkStart, measureNumber);
                     reader.Seek(chunkEnd);
                 }
                 else if (trackNumber >= masterInfo->numTracks)
                 {
                     std::cerr << std::format("In song {}, pattern at 0x{:X} has invalid track number, {}. Skipping.\n",
-                                             identifier.name, chunkStart, trackNumber);
+                                             source.name, chunkStart, trackNumber);
                     reader.Seek(chunkEnd);
                 }
                 else if (const auto payloadLength = numberOfNotes * kNoteDataSize; 0x04 + payloadLength != chunkLength)
                 {
                     std::cerr << std::format(
                         "In song {}, pattern at measure {}, track {} has an invalid number of notes. Skipping.\n",
-                        identifier.name, measureNumber, trackNumber);
+                        source.name, measureNumber, trackNumber);
                     reader.Seek(chunkEnd);
                 }
                 else
@@ -421,7 +463,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                     {
                         std::cerr << std::format("In song {}, found a duplicate pattern at measure {}, track {}. "
                                                  "Overwriting previous entry.\n",
-                                                 identifier.name, measureNumber, trackNumber);
+                                                 source.name, measureNumber, trackNumber);
                     }
                     cell = {.notes = std::move(notes)};
                 }
@@ -429,6 +471,11 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         }
         else
         {
+            if (chunkTag != Tag::End)
+            {
+                std::cerr << std::format("WARNING: Chunk found with unknown tag {:08X} at position {:08X}\n",
+                                         static_cast<int>(chunkTag), chunkStart);
+            }
             reader.Skip(chunkLength);
         }
 
@@ -436,7 +483,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         {
             std::cerr << std::format("Payload with tag 0x{:04X} at 0x{:X} does not end at the correct address for song "
                                      "{}. Expected: 0x{:X}, Found: 0x{:X}\n",
-                                     static_cast<uint16_t>(chunkTag), chunkStart - 0x04, identifier.name, chunkEnd,
+                                     static_cast<uint16_t>(chunkTag), chunkStart - 0x04, source.name, chunkEnd,
                                      reader.Position());
         }
 
@@ -446,18 +493,18 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     if (reader.Position() != songEndAddress)
     {
         std::cerr << std::format("Song {} does not end at the correct address. Expected: 0x{:X}, Found: 0x{:X}\n",
-                                 identifier.name, songEndAddress, reader.Position());
+                                 source.name, songEndAddress, reader.Position());
     }
 
     if (!masterInfo.has_value())
     {
-        std::cerr << std::format("Song {} did not have a MasterInfo block. Aborting.\n", identifier.name);
+        std::cerr << std::format("Song {} did not have a MasterInfo block. Aborting.\n", source.name);
         return std::nullopt;
     }
 
     if (!measures.has_value())
     {
-        std::cerr << std::format("Song {} did not have a MeasureInfo block. Aborting.\n", identifier.name);
+        std::cerr << std::format("Song {} did not have a MeasureInfo block. Aborting.\n", source.name);
         return std::nullopt;
     }
 
@@ -465,7 +512,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     measures->resize(masterInfo->numMeasures);
 
     return SongData{
-        .name = identifier.name,
+        .name = source.name,
+        .sourceSongName = sourceSongName,
         .hasSolo = hasSolo,
         .fxType = fxType,
         .locked = locked,

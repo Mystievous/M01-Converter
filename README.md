@@ -3,10 +3,12 @@
 This is a CLI application written in C++ that takes in a save file (.sav) from the Korg M01 application for the DS, and
 outputs MIDI (.mid) files corresponding to each of the songs stored in the save file.
 
+It also supports saves from M01D, the 3DS release of the app.
+
 It has two modes of running:
 
 1. Matching the MIDI export feature of the 3DS version of the app
-    - Verified byte-for-byte identical to native 3DS exports, including full-length built-in demo songs.
+   - Verified byte-for-byte identical to native 3DS exports, including full-length built-in demo songs.
 
 2. An export with "extended" features, such as automatically setting time signatures, along with patch changes and many
    other CC messages like volume and pan.
@@ -18,32 +20,46 @@ out [their video on the topic](https://www.youtube.com/watch?v=7ptN-3RT8yA)!
 
 Download the version for your platform from [releases](https://github.com/Mystievous/M01-Converter/releases).
 
-Then, extract the archive and bring your .sav file to the folder with the executable.
+Then, extract the archive and bring your save file(s) to the folder with the executable.
 
 You can run the tool with the following command:
 
 ```sh
 # Windows
-./M01-Converter.exe SaveFile.sav
+./M01-Converter.exe SaveFile.sav # M01
+./M01-Converter.exe M01Dn_00000000 # M01D
+./M01-Converter.exe M01Dn_00100000 # M01D single song
 
 # Linux/Mac
-./M01-Converter SaveFile.sav
+./M01-Converter SaveFile.sav # M01
+./M01-Converter M01Dn_00000000 # M01D
+./M01-Converter M01Dn_00100000 # M01D single song
 ```
 
 Or, if you want to use the extended export, make sure the config.yml is next to the executable and add `-e`:
 
 ```sh
 # Windows
-./M01-Converter.exe -e SaveFile.sav
+./M01-Converter.exe -e SaveFile.sav # M01
+./M01-Converter.exe -e M01Dn_00000000 # M01D
+./M01-Converter.exe -e M01Dn_00100000 # M01D single song
 
 # Linux/Mac
-./M01-Converter -e SaveFile.sav
+./M01-Converter -e SaveFile.sav # M01
+./M01-Converter -e M01Dn_00000000 # M01D
+./M01-Converter -e M01Dn_00100000 # M01D single song
 ```
+
+### M01D
+
+- Run the tool on the `M01Dn_00000000`, the song index file, to convert all songs. This requires all files from the save to be present in the same folder.
+- Alternatively, you can run it on an individual song file like `M01Dn_0010000a` (any file except for the index above) to convert only that one song.
 
 ## Features
 
 - All song slots with data saved to them are exported to individual MIDI files with the same name as the song.
     - i.e. "MY SONG" will be exported to "MY SONG.mid"
+    - If you're converting one individual M01D song file, it will instead take the filename of the input.
 - Each MIDI file has 9 tracks. A "Meta" MIDI track with Song Name and Tempo, and each Instrument/Track in the save file
   exported as a separate MIDI track, with its own channel (see Extended mode for configurable channels).
     - i.e. in Standard mode, Instrument 1 is on MIDI Track 1, with Channel 0.
@@ -55,10 +71,10 @@ Or, if you want to use the extended export, make sure the config.yml is next to 
   below.
     - You can see the full information that is read in the [SaveStructure.h](include/M01Core/SaveStructure.h) file.
     - You can also find my original pattern script for [ImHex](https://github.com/WerWolv/ImHex) that I used to reverse
-      engineer the save file format at [M01_SaveFile.hexpat](M01_SaveFile.hexpat), which can be used to inspect your own
-      save file in detail. As far as I can tell, almost everything in the save file is defined in there. There are still
-      fields marked "unknown", but only a few ever have data in them, which doesn't seem to be a functional result of
-      song data you can change in the app.
+      engineer the save file format at [M01_SaveFile.hexpat](hexpats/patterns/M01_SaveFile.hexpat), which can be used to
+      inspect your own save file in detail. As far as I can tell, almost everything in the save file is defined in
+      there. There are still fields marked "unknown", but only a few ever have data in them, which doesn't seem to be a
+      functional result of song data you can change in the app.
 
 ### Extended Export
 
@@ -158,7 +174,7 @@ Notes can also be remapped by specifying specific note numbers:
           difficult.
 - Building this tool into a standalone DS homebrew app that can read the save file directly from the DS, allowing for
   only the resulting MIDI files themselves to need exporting to a computer.
-- Add support for 3DS save files in the tool, and for all the above plans.
+- 3DS/M01D save support for all of the above features
 
 ## Nitty Gritty 3DS Parity Stuff
 

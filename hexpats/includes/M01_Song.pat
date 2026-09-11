@@ -1,10 +1,12 @@
+#pragma once
+#pragma loop_limit 1000000
+
 #include <std/mem.pat>
 #include <std/sys.pat>
 #include <std/io.pat>
 
-#pragma loop_limit 1000000
-
-bool VALIDATE_CHECKSUMS = true;
+u32 M01_SONG_VERSION = 0x04;
+u32 M01D_SONG_VERSION = 0x05;
 
 enum M1Keyboard : u8 {
     Piano, EPiano1, EPiano2, EPiano3, Clav, Harpsicord, Organ1, Organ2, MagicOrgan, DWPiano, DWEP1, DWEP2, DWEP3, DWClav, DWOrgan1, DWOrgan2
@@ -328,10 +330,10 @@ fn sum_range(u128 offsetFrom, u128 offsetTo) {
     return acc;
 };
 
-struct SongChecksum<auto Start, auto Length> {
+struct SongChecksum<auto Start, auto Length, auto ValidateChecksum> {
     u32 checksum [[color("B52D1B")]];
     u32 computed = 0;
-    if (VALIDATE_CHECKSUMS) {
+    if (ValidateChecksum) {
         computed = sum_range(Start + 4, Start + Length);
         std::assert_warn(checksum == computed, std::format("Song checksum mismatch at {:04X}:. Stored: {:08X}, Computed: {:08X}", Start, checksum, computed));
     }
@@ -378,14 +380,23 @@ struct Chunk {
     }
 };
 
-struct SongData<auto Start, auto Length> {
+struct SongSectionHeader {
+    char marker[4] [[color("0091ff")]];
+    std::assert(marker == "song", "missing song data marker");
+    u64 start = $;
+    u32 length [[color("c9c9c9")]]; // Includes the length value bytes
+    u32 version [[color("c371f0")]];
+    u8 unknown01[4] [[color("404040")]];
+};
+
+struct SongData<auto Start, auto Length, auto ValidateChecksum> {
     g_numTracks = 0;
     g_numMeasures = 0;
 
-    SongChecksum<Start, Length> checksum;
-    // Similar to the version in the song header, this is always `4` for M01/NDS,
-    // and always `5` for the M01D/3DS.
+    SongChecksum<Start, Length, ValidateChecksum> checksum;
+    // This is always `4` for M01/NDS, and always `5` for the M01D/3DS.
     u32 version [[color("c371f0")]];
+    std::assert(version == M01_SONG_VERSION || version == M01D_SONG_VERSION, "unknown song version");
     Instrument instruments[8];
     PlaybackInfo playbackInfo [[color("bffc56")]];
     u8 unknown01[3] [[color("404040")]];
@@ -395,69 +406,18 @@ struct SongData<auto Start, auto Length> {
     u8 unknown03[3] [[color("404040")]];
     SceneState sceneState [[color("fba6ff")]];
     u8 unknown04[2] [[color("404040")]];
-    // The song name for factory songs, like Demo 2 and both Bonus tracks.
-    // Demo 1 doesn't have this field.
-    char factorySongName[8] [[color("ff00ff")]];
+    // Stores the "original" song name for songs that were transferred between consoles.
+    // If transferred again after the first time, replaces the original name with whatever the new source console has it saved as.
+    // Also present for three of the four demo/bonus songs.
+    char sourceSongName[8] [[color("ff00ff")]];
     u8 unknown05[12] [[color("404040")]];
-    char songLabel[4] [[color("0091ff")]];
-    std::assert(songLabel == "song", "Song is missing data label");
-    u64 songDataStart = $;
-    u32 songDataLength [[color("c9c9c9")]]; // Includes the length value bytes
-    u32 songDataVersion [[color("c371f0")]];
-    u8 unknown06[4] [[color("404040")]];
+    if (version == M01D_SONG_VERSION) {
+      char songMarker[4] [[color("0091ff")]];
+      std::assert(songMarker == "song", "missing song data v5 marker");
+      u8 unknownMarkerData[8] [[color("404040")]];
+    }
+    SongSectionHeader songDataHeader;
     Chunk chunks[while($ < Start + Length)];
-    std::assert(Start + Length == songDataStart + songDataLength, "mismatch in song length values");
+    std::assert(Start + Length == songDataHeader.start + songDataHeader.length, "mismatch in song length values");
     std::assert($ == Start + Length, "song data did not end at the right length");
 };
-
-struct SongIdentifier<auto FollowSongs> {
-    bool songHasData [[color("00ff00")]];
-    char name[8] [[color("ff00ff")]];
-    u8 unknown01[0x0F] [[color("404040")]];
-    u32 songStartAddress [[color("00ffff")]];
-    u32 songLength [[color("0091ff")]];
-    u8 unknown02[0x08] [[color("404040")]];
-    if (songHasData && FollowSongs) {
-        SongData<songStartAddress, songLength> song @ songStartAddress;
-    }
-};
-
-fn check_header_sum(u32 stored) {
-    u32 computed = 0;
-    bool valid = false;
-    if (VALIDATE_CHECKSUMS) {
-        // Sum of all bytes from immediately after the checksum u32 until
-        // 0x1C4 (exclusive), which is where the block of \xFF starts.
-        computed = sum_range($ + 0x04, $ + 0x1C4);
-        valid = stored == computed;
-        std::assert_warn(valid, "header checksum mismatch");
-    }
-    return std::format("{:08X} {}", stored, valid ? "(OK)" : (VALIDATE_CHECKSUMS ? std::format("(BAD, want {:08X})", computed) : ""));
-};
-using HeaderChecksum = u32 [[format("check_header_sum")]];
-
-struct Header<auto ValidateChecksum, auto FollowSongs> {
-    if (ValidateChecksum) {
-        HeaderChecksum checksum [[color("B52D1B")]];
-    } else {
-        u32 checksum [[color("871E10")]];
-    }
-    char signature[4] [[color("0091ff")]];
-    std::assert(signature == "M01W", "Not a Korg M01 save file");
-    // always `4` for M01/NDS saves, and always `7` for M01D/3DS saves.
-    u32 version [[color("c371f0")]];
-
-    SongIdentifier<FollowSongs> songs[10];
-
-    // There's the exact amount of space needed for an "11th" song, but
-    // none in game. I'm assuming it's an unused slot.
-    SongIdentifier<false> unusedSlot;
-};
-
-Header<true, true> header @ 0x00;
-
-// This is an almost direct copy of the header. Likely as a backup if the first one gets messed up.
-//
-// The only difference is that sometimes the checksum field reads ascii "BFBA", the same string that
-// shows up right before the start of the song data range.
-Header<false, false> copyHeader @ 0x0204;

@@ -10,20 +10,20 @@
 
 int main(const int argc, char** argv)
 {
-    cxxopts::Options options("M01-Converter", "Convert Korg M01 DS songs to MIDI files");
+    cxxopts::Options options("M01-Converter", "Convert songs from Korg M01 (NDS) and M01D (3DS) to MIDI files");
     options.add_options()("h,help", "Show help")("e,extended", "Create an 'extended' MIDI file.")(
         "c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.",
-        cxxopts::value<std::string>())("i,input", "Input .sav file", cxxopts::value<std::string>());
+        cxxopts::value<std::string>())("i,input", "Input file", cxxopts::value<std::string>());
 
     options.parse_positional({"input"});
-    options.positional_help("input_sav");
+    options.positional_help("input_file");
 
     const auto result = options.parse(argc, argv);
 
     if (result.count("help"))
     {
         std::cout << options.help() << std::endl;
-        return 1;
+        return 0;
     }
 
     std::string inputPath;
@@ -34,9 +34,8 @@ int main(const int argc, char** argv)
     }
     else
     {
-        std::cout << "Path to .sav file:" << std::endl;
-        std::cout << "> ";
-        std::getline(std::cin, inputPath);
+        std::cout << options.help() << std::endl;
+        return 0;
     }
 
     try
@@ -52,7 +51,7 @@ int main(const int argc, char** argv)
         const std::string configPath =
             result.count("config") ? result["config"].as<std::string>() : std::string("config.yml");
 
-        auto results = M01Core::ConvertSaveFile(inputPath, extendedMode, configPath);
+        auto results = M01Core::ConvertFile(inputPath, extendedMode, configPath);
         std::cout << "Found " << results.size() << " songs." << std::endl;
 
         for (auto& r : results)

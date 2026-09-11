@@ -26,15 +26,28 @@ public:
 
     [[nodiscard]] size_t Position() const { return pos_; }
     [[nodiscard]] size_t Remaining() const { return data_.size() - pos_; }
+    [[nodiscard]] size_t Size() const { return data_.size(); }
+    [[nodiscard]] bool Has(const size_t length, const size_t offset) const
+    {
+        return offset <= data_.size() && length <= data_.size() - offset;
+    }
 
     template <typename T>
         requires std::integral<T>
     T Read()
     {
-        Require(pos_, sizeof(T));
-        T value{};
-        std::memcpy(&value, data_.data() + pos_, sizeof(T));
+        const auto value = Read<T>(pos_);
         pos_ += sizeof(T);
+        return value;
+    }
+
+    template <typename T>
+        requires std::integral<T>
+    [[nodiscard]] T Read(const size_t position) const
+    {
+        Require(position, sizeof(T));
+        T value{};
+        std::memcpy(&value, data_.data() + position, sizeof(T));
         return value;
     }
 
@@ -52,9 +65,15 @@ public:
 
     std::span<const std::byte> ReadBytes(const size_t count)
     {
-        Require(pos_, count);
-        const auto bytes = data_.subspan(pos_, count);
+        const auto value = ReadBytes(count, pos_);
         pos_ += count;
+        return value;
+    }
+
+    [[nodiscard]] std::span<const std::byte> ReadBytes(const size_t count, const size_t position) const
+    {
+        Require(position, count);
+        const auto bytes = data_.subspan(position, count);
         return bytes;
     }
 
@@ -65,7 +84,14 @@ public:
         return std::string(view.substr(0, view.find('\0')));
     }
 
-    [[nodiscard]] uint32_t SumBytes(const size_t offset, const size_t length) const
+    [[nodiscard]] std::string ReadString(const size_t width, const size_t position) const
+    {
+        const auto bytes = ReadBytes(width, position);
+        const std::string_view view(reinterpret_cast<const char*>(bytes.data()), width);
+        return std::string(view.substr(0, view.find('\0')));
+    }
+
+    [[nodiscard]] uint32_t SumBytes(const size_t length, const size_t offset) const
     {
         Require(offset, length);
 
