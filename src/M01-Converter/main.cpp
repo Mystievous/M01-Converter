@@ -23,7 +23,7 @@ int main(const int argc, char** argv)
     if (result.count("help"))
     {
         std::cout << options.help() << std::endl;
-        return 1;
+        return 0;
     }
 
     std::string inputPath;
@@ -34,9 +34,8 @@ int main(const int argc, char** argv)
     }
     else
     {
-        std::cout << "Path to .sav file:" << std::endl;
-        std::cout << "> ";
-        std::getline(std::cin, inputPath);
+        std::cout << options.help() << std::endl;
+        return 0;
     }
 
     try
