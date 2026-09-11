@@ -10,13 +10,13 @@
 
 int main(const int argc, char** argv)
 {
-    cxxopts::Options options("M01-Converter", "Convert Korg M01 DS songs to MIDI files");
+    cxxopts::Options options("M01-Converter", "Convert songs from Korg M01 (NDS) and M01D (3DS) to MIDI files");
     options.add_options()("h,help", "Show help")("e,extended", "Create an 'extended' MIDI file.")(
         "c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.",
-        cxxopts::value<std::string>())("i,input", "Input .sav file", cxxopts::value<std::string>());
+        cxxopts::value<std::string>())("i,input", "Input file", cxxopts::value<std::string>());
 
     options.parse_positional({"input"});
-    options.positional_help("input_sav");
+    options.positional_help("input_file");
 
     const auto result = options.parse(argc, argv);
 
