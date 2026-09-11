@@ -179,19 +179,18 @@ namespace
     };
 }
 
-std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier)
+std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier, uint32_t startAddress)
 {
-    reader.Seek(identifier.songStartAddress);
+    reader.Seek(startAddress);
     const auto songChecksum = reader.Read<uint32_t>();
 
-    const auto calculatedChecksum = reader.SumBytes(identifier.songStartAddress + 0x04, identifier.songLength - 0x04);
+    const auto calculatedChecksum = reader.SumBytes(startAddress + 0x04, identifier.songLength - 0x04);
     if (songChecksum != calculatedChecksum)
     {
         std::cerr << std::format("Song checksum mismatch for {}. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
                                  identifier.name, songChecksum, calculatedChecksum);
     }
 
-    // ReSharper disable once CppTooWideScopeInitStatement
     const auto songVersion = reader.Read<uint32_t>();
 
     SongFormat songFormat = M01;
@@ -278,7 +277,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
     const auto songDataStart = reader.Position();
     const auto songDataLength = reader.Read<uint32_t>(); // Length includes its own bytes
-    // ReSharper disable once CppTooWideScopeInitStatement
     const auto songDataVersion = reader.Read<uint32_t>();
 
     if (songDataVersion != kSongDataVersion)
@@ -288,7 +286,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         return std::nullopt;
     }
 
-    const auto songEndAddress = identifier.songStartAddress + identifier.songLength;
+    const auto songEndAddress = startAddress + identifier.songLength;
 
     if (songEndAddress != songDataStart + songDataLength)
     {
@@ -408,7 +406,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 const auto measureNumber = reader.Read<uint8_t>();
                 const auto trackNumber = reader.Read<uint8_t>();
                 const auto numberOfNotes = reader.Read<uint16_t>();
-
                 if (measureNumber >= masterInfo->numMeasures)
                 {
                     std::cerr << std::format(
@@ -457,6 +454,11 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         }
         else
         {
+            if (chunkTag != Tag::End)
+            {
+                std::cerr << std::format("WARNING: Chunk found with unknown tag {:08X} at position {:08X}\n",
+                                         static_cast<int>(chunkTag), chunkStart);
+            }
             reader.Skip(chunkLength);
         }
 

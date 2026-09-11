@@ -2,6 +2,7 @@
 #pragma magic [ 4D 30 31 57 07 00 00 00 ] @ 0x04
 
 #include <std/sys.pat>
+#include <std/mem.pat>
 #include <std/io.pat>
 
 bool VALIDATE_CHECKSUMS = true;

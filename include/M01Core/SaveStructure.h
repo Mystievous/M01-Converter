@@ -11,7 +11,6 @@
 #include <vector>
 #include <optional>
 
-constexpr int kNumberOfSongs = 10;
 constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
 constexpr int kNumberOfDrumSamples = 12;
@@ -149,7 +148,7 @@ struct SongIdentifier
 {
     bool songHasData;
     std::string name;
-    uint32_t songStartAddress;
+    uint32_t songLocation;
     uint32_t songLength;
 };
 

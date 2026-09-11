@@ -16,8 +16,7 @@ namespace M01Core
     std::vector<ConversionResult> ConvertSaveFile(const std::string& path, const bool extended,
                                                   const std::string& configPath)
     {
-        const std::vector<std::byte> bytes = ReadWholeFile(path);
-        const SaveFile save(bytes);
+        const SaveFile save(path);
 
         if (!save.IsValid())
         {

@@ -6,9 +6,6 @@
 #ifndef SAVEFILE_H
 #define SAVEFILE_H
 
-#include <span>
-#include <cstddef>
-
 #include "M01Core/SaveStructure.h"
 
 class SaveFile
@@ -17,7 +14,7 @@ class SaveFile
     std::vector<SongData> songs;
 
 public:
-    explicit SaveFile(std::span<const std::byte> data);
+    explicit SaveFile(const std::string path);
 
     [[nodiscard]] bool IsValid() const;
 
