@@ -12,4 +12,4 @@
 
 std::vector<std::byte> ReadWholeFile(const std::string& path);
 
-#endif //M01_CONVERTER_FILEBYTES_H
+#endif // M01_CONVERTER_FILEBYTES_H

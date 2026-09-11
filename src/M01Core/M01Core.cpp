@@ -29,9 +29,7 @@ namespace M01Core
         {
             ConversionResult r;
             r.name = song.name;
-            r.midi = extended
-                         ? MakeExtendedMidiFile(song, configPath)
-                         : MakeMidiFile(song);
+            r.midi = extended ? MakeExtendedMidiFile(song, configPath) : MakeMidiFile(song);
 
             results.push_back(std::move(r));
         }

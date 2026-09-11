@@ -30,7 +30,7 @@ static constexpr std::string_view ToString(const KaosMode kaosMode)
 }
 
 constexpr std::string_view kKaosKey[] = {
-    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
+    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
 };
 
 static constexpr std::string_view ToString(const Key key)
@@ -40,9 +40,9 @@ static constexpr std::string_view ToString(const Key key)
 }
 
 constexpr std::string_view kKaosScale[] = {
-    "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES", "DIM", "COMDIM",
-    "MPENTA", "mPENTA", "RAGA1", "RAGA2", "ARABIA", "SPAIN", "GYPSY", "EGYPT", "HAWAII", "PELOG", "JAPAN", "RYUKYU",
-    "WHOLE", "m3RD", "M3RD", "4TH", "5TH", "OCTAVE"
+    "CHROMA", "IONIAN", "DORIAN", "PHRYGI", "LYDIAN", "MIXLYD", "AEOLIA", "LOCRIA", "MBLUES", "mBLUES",
+    "DIM",    "COMDIM", "MPENTA", "mPENTA", "RAGA1",  "RAGA2",  "ARABIA", "SPAIN",  "GYPSY",  "EGYPT",
+    "HAWAII", "PELOG",  "JAPAN",  "RYUKYU", "WHOLE",  "m3RD",   "M3RD",   "4TH",    "5TH",    "OCTAVE",
 };
 
 static constexpr std::string_view ToString(const Scale scale)
@@ -52,8 +52,8 @@ static constexpr std::string_view ToString(const Scale scale)
 }
 
 constexpr std::string_view kKaosDrumPattern[] = {
-    "8BEAT1", "8BEAT2", "16BEAT1", "16BEAT2", "ROCK1", "ROCK2", "ROCK3", "FUNK", "HOUSE1",
-    "HOUSE2", "ELECTRO", "MINIMAL", "D&B", "R&B", "HIPHOP", "PERC"
+    "8BEAT1", "8BEAT2", "16BEAT1", "16BEAT2", "ROCK1", "ROCK2", "ROCK3",  "FUNK",
+    "HOUSE1", "HOUSE2", "ELECTRO", "MINIMAL", "D&B",   "R&B",   "HIPHOP", "PERC",
 };
 
 static constexpr std::string_view ToString(const DrumPattern drumPattern)
@@ -73,26 +73,22 @@ static constexpr std::string_view ToString(const ReverbType reverbType)
     return "UNKNOWN";
 }
 
-constexpr std::string_view kSongLabel = "song";
-constexpr uint32_t kSongVersionsDS[] = {
-    0x04
-};
+constexpr std::string_view kSongMarker = "song";
 
-constexpr uint32_t kSongDataVersionsDS[] = {
-    0x01
-};
+constexpr uint32_t kM01SongVersion = 0x04;
+constexpr uint32_t kM01DSongVersion = 0x05;
 
-static bool CheckSongVersion(const uint32_t version)
+namespace
 {
-    const auto foundVersion = std::ranges::find(kSongVersionsDS, version);
-    return foundVersion != std::end(kSongVersionsDS);
+    enum SongFormat
+    {
+        M01,
+        M01D
+    };
 }
 
-static bool CheckSongDataVersion(const uint32_t version)
-{
-    const auto foundVersion = std::ranges::find(kSongDataVersionsDS, version);
-    return foundVersion != std::end(kSongDataVersionsDS);
-}
+// Song data version did not change between M01 and M01D
+constexpr uint32_t kSongDataVersion = 0x01;
 
 static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& identifier)
 {
@@ -103,7 +99,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
     const auto id = InstrumentId{
         .bank = bank,
         .category = category,
-        .program = program
+        .program = program,
     };
 
     const auto kaosModeCopy = static_cast<KaosMode>(reader.Read<uint8_t>());
@@ -141,7 +137,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
         .kaosScale = kaosScale,
         .kaosDrumPattern = kaosDrumPattern,
         .kaosMode = kaosMode,
-        .keyboardOctave = keyboardOctave
+        .keyboardOctave = keyboardOctave,
     };
 
     auto drumInfos = std::vector<DrumInfo>{};
@@ -168,7 +164,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongIdentifier& ide
         .volume = volume,
         .panning = panning,
         .playbackState = playbackState,
-        .drumInfo = std::move(drumInfos)
+        .drumInfo = std::move(drumInfos),
     };
 }
 
@@ -188,8 +184,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     reader.Seek(identifier.songStartAddress);
     const auto songChecksum = reader.Read<uint32_t>();
 
-    const auto calculatedChecksum = reader.SumBytes(identifier.songStartAddress + 0x04,
-                                                    identifier.songLength - 0x04);
+    const auto calculatedChecksum = reader.SumBytes(identifier.songStartAddress + 0x04, identifier.songLength - 0x04);
     if (songChecksum != calculatedChecksum)
     {
         std::cerr << std::format("Song checksum mismatch for {}. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
@@ -199,10 +194,21 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     // ReSharper disable once CppTooWideScopeInitStatement
     const auto songVersion = reader.Read<uint32_t>();
 
-    if (!CheckSongVersion(songVersion))
+    SongFormat songFormat = M01;
+
+    if (songVersion == kM01SongVersion)
     {
-        std::cerr << std::format("Song {} has an unsupported song version, {}. Attempting to parse anyways.\n",
-                                 identifier.name, songVersion);
+        songFormat = M01;
+    }
+    else if (songVersion == kM01DSongVersion)
+    {
+        songFormat = M01D;
+    }
+    else
+    {
+        std::cerr << std::format("Song {} has an unsupported song version, {}. Skipping\n", identifier.name,
+                                 songVersion);
+        return std::nullopt;
     }
 
     std::vector<Instrument> instruments;
@@ -223,7 +229,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     const auto reverbInfo = ReverbInfo{
         .type = reverbType,
         .time = reverbTime,
-        .level = reverbLevel
+        .level = reverbLevel,
     };
     reader.Skip(0x01);
 
@@ -237,7 +243,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         .time = delayTime,
         .panRatio = delayPanRatio,
         .feedback = delayFeedback,
-        .level = delayLevel
+        .level = delayLevel,
     };
     reader.Skip(0x03);
 
@@ -247,11 +253,17 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     const auto locked = bits::Get<2, 1>(sceneBytes);
     const uint8_t swing = bits::Get<3, 8>(sceneBytes);
 
-    reader.Skip(0x16);
+    reader.Skip(0x02);
 
-    if (const auto label = reader.ReadString(4); label != kSongLabel)
+    const auto sourceSongName = reader.ReadString(8);
+
+    reader.Skip(0x0C);
+
+    const auto marker = reader.ReadString(4);
+
+    if (marker != kSongMarker)
     {
-        std::cerr << std::format("Song label for {} is not `song`, instead: {}\n", identifier.name, label);
+        std::cerr << std::format("Song marker for {} is not `song`, instead: {}\n", identifier.name, marker);
     }
 
     const auto songDataStart = reader.Position();
@@ -259,10 +271,11 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
     // ReSharper disable once CppTooWideScopeInitStatement
     const auto songDataVersion = reader.Read<uint32_t>();
 
-    if (!CheckSongDataVersion(songDataVersion))
+    if (songDataVersion != kSongDataVersion)
     {
-        std::cerr << std::format("Song {} has an unsupported song data version, {}. Attempting to parse anyways.\n",
-                                 identifier.name, songDataVersion);
+        std::cerr << std::format("Song {} has an unsupported song data version, {}. Skipping...\n", identifier.name,
+                                 songDataVersion);
+        return std::nullopt;
     }
 
     const auto songEndAddress = identifier.songStartAddress + identifier.songLength;
@@ -291,9 +304,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (masterInfo.has_value())
             {
                 std::cerr << std::format(
-                    "Found more than one Master Info block in song {}. Overwriting previous ones.\n",
-                    identifier.name
-                );
+                    "Found more than one Master Info block in song {}. Overwriting previous ones.\n", identifier.name);
             }
             const auto numTracks = reader.Read<uint8_t>();
             const auto numMeasures = reader.Read<uint8_t>();
@@ -304,18 +315,16 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
             if (numTracks > kNumberOfInstruments)
             {
-                std::cerr << std::format(
-                    "Number of tracks exceeds the maximum for song {}. Value: {}, Maximum: {}\n",
-                    identifier.name, numTracks, kNumberOfInstruments
-                );
+                std::cerr << std::format("Number of tracks exceeds the maximum for song {}. Value: {}, Maximum: {}\n",
+                                         identifier.name, numTracks, kNumberOfInstruments);
             }
 
             // MasterInfo comes before tracks in all 3DS and NDS saves.
             // If it comes afterwards, tracks processed before it will be cleared.
             tracks.assign(numTracks, Track{
-                              .instrument = {},
-                              .measures = std::vector<std::optional<Pattern>>(numMeasures)
-                          });
+                                         .instrument = {},
+                                         .measures = std::vector<std::optional<Pattern>>(numMeasures),
+                                     });
 
             const auto instrumentCount = std::min<int>(numTracks, static_cast<int>(instruments.size()));
             for (int i = 0; i < instrumentCount; ++i)
@@ -328,7 +337,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 .numMeasures = numMeasures,
                 .tempo = tempo,
                 .swing = masterSwing,
-                .stepsPerMeasure = stepsPerMeasure
+                .stepsPerMeasure = stepsPerMeasure,
             };
         }
         else if (chunkTag == Tag::MeasureInfo)
@@ -336,17 +345,14 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
             if (measures.has_value())
             {
                 std::cerr << std::format(
-                    "Found more than one Measure Info block in song {}. Overwriting previous ones.\n",
-                    identifier.name
-                );
+                    "Found more than one Measure Info block in song {}. Overwriting previous ones.\n", identifier.name);
             }
             const auto measureCount = chunkLength / kMeasureInfoSize;
             if (chunkLength % kMeasureInfoSize != 0)
             {
-                std::cerr << std::format(
-                    "MeasureInfo chunk length is not a multiple of the defined size for song {}. Length: {}, Defined Size: {}\n",
-                    identifier.name, chunkLength, kMeasureInfoSize
-                );
+                std::cerr << std::format("MeasureInfo chunk length is not a multiple of the defined size for song {}. "
+                                         "Length: {}, Defined Size: {}\n",
+                                         identifier.name, chunkLength, kMeasureInfoSize);
                 reader.Seek(chunkEnd);
             }
             else
@@ -355,16 +361,16 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 {
                     if (measureCount != masterInfo->numMeasures)
                     {
-                        std::cerr << std::format(
-                            "Calculated measure info count does not match Master Info for song {}. Calculated: {}, Stored: {}\n",
-                            identifier.name, measureCount, masterInfo->numMeasures);
+                        std::cerr << std::format("Calculated measure info count does not match Master Info for song "
+                                                 "{}. Calculated: {}, Stored: {}\n",
+                                                 identifier.name, measureCount, masterInfo->numMeasures);
                     }
                 }
                 else
                 {
-                    std::cerr << std::format(
-                        "MeasureInfo block found before MasterInfo for song {}. Automatically deriving from chunk length, value: {}\n",
-                        identifier.name, measureCount);
+                    std::cerr << std::format("MeasureInfo block found before MasterInfo for song {}. Automatically "
+                                             "deriving from chunk length, value: {}\n",
+                                             identifier.name, measureCount);
                 }
 
                 measures = std::vector<MeasureInfo>{};
@@ -383,9 +389,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         {
             if (!masterInfo.has_value())
             {
-                std::cerr << std::format(
-                    "PatternData block found before MasterInfo for song {}. Skipping.\n",
-                    identifier.name);
+                std::cerr << std::format("PatternData block found before MasterInfo for song {}. Skipping.\n",
+                                         identifier.name);
                 reader.Seek(chunkEnd);
             }
             else
@@ -397,15 +402,14 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                 if (measureNumber >= masterInfo->numMeasures)
                 {
                     std::cerr << std::format(
-                        "In song {}, pattern at 0x{:X} has invalid measure number, {}. Skipping.\n",
-                        identifier.name, chunkStart, measureNumber);
+                        "In song {}, pattern at 0x{:X} has invalid measure number, {}. Skipping.\n", identifier.name,
+                        chunkStart, measureNumber);
                     reader.Seek(chunkEnd);
                 }
                 else if (trackNumber >= masterInfo->numTracks)
                 {
-                    std::cerr << std::format(
-                        "In song {}, pattern at 0x{:X} has invalid track number, {}. Skipping.\n",
-                        identifier.name, chunkStart, trackNumber);
+                    std::cerr << std::format("In song {}, pattern at 0x{:X} has invalid track number, {}. Skipping.\n",
+                                             identifier.name, chunkStart, trackNumber);
                     reader.Seek(chunkEnd);
                 }
                 else if (const auto payloadLength = numberOfNotes * kNoteDataSize; 0x04 + payloadLength != chunkLength)
@@ -427,25 +431,17 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
                         const auto noteId = reader.Read<uint8_t>();
                         const auto startPoint = reader.Read<uint8_t>();
 
-                        notes.emplace_back(
-                            noteLength,
-                            noteIntensity * 17 / 2,
-                            noteId - 0x80,
-                            startPoint
-                        );
+                        notes.emplace_back(noteLength, noteIntensity * 17 / 2, noteId - 0x80, startPoint);
                     }
 
                     auto& cell = tracks[trackNumber].measures[measureNumber];
                     if (cell.has_value())
                     {
-                        std::cerr << std::format(
-                            "In song {}, found a duplicate pattern at measure {}, track {}. Overwriting previous entry.\n",
-                            identifier.name, measureNumber, trackNumber
-                        );
+                        std::cerr << std::format("In song {}, found a duplicate pattern at measure {}, track {}. "
+                                                 "Overwriting previous entry.\n",
+                                                 identifier.name, measureNumber, trackNumber);
                     }
-                    cell = {
-                        .notes = std::move(notes)
-                    };
+                    cell = {.notes = std::move(notes)};
                 }
             }
         }
@@ -456,13 +452,14 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
         if (reader.Position() != chunkEnd)
         {
-            std::cerr << std::format(
-                "Payload with tag 0x{:04X} at 0x{:X} does not end at the correct address for song {}. Expected: 0x{:X}, Found: 0x{:X}\n",
-                static_cast<uint16_t>(chunkTag), chunkStart - 0x04, identifier.name, chunkEnd,
-                reader.Position());
+            std::cerr << std::format("Payload with tag 0x{:04X} at 0x{:X} does not end at the correct address for song "
+                                     "{}. Expected: 0x{:X}, Found: 0x{:X}\n",
+                                     static_cast<uint16_t>(chunkTag), chunkStart - 0x04, identifier.name, chunkEnd,
+                                     reader.Position());
         }
 
-        if (chunkTag == Tag::End) break;
+        if (chunkTag == Tag::End)
+            break;
     }
     if (reader.Position() != songEndAddress)
     {
@@ -487,6 +484,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
 
     return SongData{
         .name = identifier.name,
+        .sourceSongName = sourceSongName,
         .hasSolo = hasSolo,
         .fxType = fxType,
         .locked = locked,
@@ -495,6 +493,6 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier&
         .delayInfo = delayInfo,
         .masterInfo = *masterInfo,
         .measureInfos = std::move(*measures),
-        .tracks = std::move(tracks)
+        .tracks = std::move(tracks),
     };
 }

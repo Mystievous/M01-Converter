@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(M01-Converter VERSION 1.2.0 LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(M01_FLAT_INSTALL "Install the executable and config.yml side by side." OFF)
 include(GNUInstallDirs)

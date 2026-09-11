@@ -16,6 +16,7 @@ constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
 constexpr int kNumberOfDrumSamples = 12;
 
+// clang-format off
 enum class KaosMode : uint8_t
 {
     MONO, CHD2, CHD3, CHD4, DRUM
@@ -37,6 +38,7 @@ enum class DrumPattern : uint8_t
     EIGHT_BEAT1, EIGHT_BEAT2, SIXTEEN_BEAT1, SIXTEEN_BEAT2, ROCK1, ROCK2, ROCK3, FUNK, HOUSE1, HOUSE2, ELECTRO, MINIMAL,
     DnB, RnB, HIPHOP, PERC
 };
+// clang-format on
 
 struct PlaybackState
 {
@@ -160,6 +162,7 @@ enum class FXType : uint8_t
 struct SongData
 {
     std::string name;
+    std::string sourceSongName;
     bool hasSolo = false;
     FXType fxType = FXType::Delay;
     bool locked = false;
@@ -178,4 +181,4 @@ struct SaveHeader
     const uint32_t version;
 };
 
-#endif //SAVESTRUCTURE_H
+#endif // SAVESTRUCTURE_H

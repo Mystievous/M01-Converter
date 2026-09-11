@@ -13,4 +13,4 @@ smf::MidiFile MakeMidiFile(const SongData& song);
 
 smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& configPath);
 
-#endif //M01_CONVERTER_MIDIEXPORT_H
+#endif // M01_CONVERTER_MIDIEXPORT_H

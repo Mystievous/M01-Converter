@@ -11,4 +11,4 @@
 
 std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier);
 
-#endif //M01_CONVERTER_SONGDECODER_H
+#endif // M01_CONVERTER_SONGDECODER_H

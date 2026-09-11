@@ -17,17 +17,12 @@
 #include <string>
 #include <string_view>
 
-static_assert(std::endian::native == std::endian::little,
-              "M01 save decoding assumes a little-endian host");
+static_assert(std::endian::native == std::endian::little, "M01 save decoding assumes a little-endian host");
 
 class ByteReader
 {
 public:
-    explicit ByteReader(const std::span<const std::byte> data,
-                        const size_t pos = 0)
-        : data_(data), pos_(pos)
-    {
-    }
+    explicit ByteReader(const std::span<const std::byte> data, const size_t pos = 0) : data_(data), pos_(pos) {}
 
     [[nodiscard]] size_t Position() const { return pos_; }
     [[nodiscard]] size_t Remaining() const { return data_.size() - pos_; }
@@ -90,9 +85,8 @@ private:
     {
         if (at > data_.size() || count > data_.size() - at)
         {
-            throw std::out_of_range(std::format(
-                "Attempt to read {} bytes at offset {}, buffer is {} bytes", count,
-                at, data_.size()));
+            throw std::out_of_range(
+                std::format("Attempt to read {} bytes at offset {}, buffer is {} bytes", count, at, data_.size()));
         }
     }
 };
