@@ -52,7 +52,7 @@ int main(const int argc, char** argv)
         const std::string configPath =
             result.count("config") ? result["config"].as<std::string>() : std::string("config.yml");
 
-        auto results = M01Core::ConvertSaveFile(inputPath, extendedMode, configPath);
+        auto results = M01Core::ConvertFile(inputPath, extendedMode, configPath);
         std::cout << "Found " << results.size() << " songs." << std::endl;
 
         for (auto& r : results)

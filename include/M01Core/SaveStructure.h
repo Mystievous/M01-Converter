@@ -152,6 +152,12 @@ struct SongIdentifier
     uint32_t songLength;
 };
 
+struct SongSource
+{
+    std::string name;
+    std::optional<uint32_t> songLength;
+};
+
 enum class FXType : uint8_t
 {
     Delay = 0,

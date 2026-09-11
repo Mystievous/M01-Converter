@@ -10,7 +10,6 @@
 #include "M01Core/SaveStructure.h"
 #include <cstdint>
 
-std::optional<SongData> DecodeSongData(ByteReader& reader, const SongIdentifier& identifier,
-                                       const uint32_t startAddress);
+std::optional<SongData> DecodeSongData(ByteReader& reader, const SongSource& source, const uint32_t startAddress);
 
 #endif // M01_CONVERTER_SONGDECODER_H

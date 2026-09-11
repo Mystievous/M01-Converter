@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
+#include <span>
 #include <filesystem>
 #include <algorithm>
 
@@ -18,8 +19,6 @@
 #include "M01Core/SaveStructure.h"
 #include "M01Core/SongDecoder.h"
 #include "M01Core/ByteReader.h"
-
-constexpr std::string_view kFileSignature = "M01W";
 
 constexpr uint32_t kM01SaveVersion = 0x04;
 constexpr uint32_t kM01DSaveVersion = 0x07;
@@ -56,41 +55,59 @@ static SongIdentifier DecodeSongIdentifier(ByteReader& reader)
     };
 }
 
-SaveFile::SaveFile(const std::string path)
+SaveFile::SaveFile(std::span<const std::byte> bytes, const std::filesystem::path& parentDir)
 {
-    const std::vector<std::byte> bytes = ReadWholeFile(path);
     ByteReader reader(bytes);
     const auto checksum = reader.Read<uint32_t>();
     const auto signature = reader.ReadString(4);
     const auto version = reader.Read<uint32_t>();
 
-    // Sanity check, is this a save for the right app.
-    isValid = signature == kFileSignature;
+    isValid = true;
+
+    if (signature != kFileSignature)
+    {
+        std::cerr << std::format("ERROR: Save file is missing `M01W` signature.");
+        isValid = false;
+    }
 
     SaveFormat saveFormat = M01;
-    if (version == kM01SaveVersion)
+    if (isValid)
     {
-        saveFormat = M01;
-    }
-    else if (version == kM01DSaveVersion)
-    {
-        saveFormat = M01D;
-    }
-    else
-    {
-        std::cerr << std::format("ERROR: Save file format version {} is unfamiliar to this tool.\n", version);
-        isValid = false;
+        if (version == kM01SaveVersion)
+        {
+            saveFormat = M01;
+        }
+        else if (version == kM01DSaveVersion)
+        {
+            saveFormat = M01D;
+        }
+        else
+        {
+            std::cerr << std::format("ERROR: Save file format version {} is unfamiliar to this tool.\n", version);
+            isValid = false;
+        }
     }
 
     // Verifies the header's checksum.
-    constexpr auto checksumStart = 0x04;
-    const auto checksumEnd = saveFormat == M01 ? 0x1C4 : 0x04D;
-    const auto sum = reader.SumBytes(checksumStart, checksumEnd - checksumStart);
-    if (checksum != sum)
+    if (isValid)
     {
-        std::cerr << std::format("Header checksum mismatch. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n", checksum,
-                                 sum);
-        isValid = false;
+        constexpr auto checksumStart = 0x04;
+        const auto checksumEnd = saveFormat == M01 ? 0x1C4 : 0x04D;
+        if (reader.Has(checksumEnd - checksumStart, checksumStart))
+        {
+            const auto sum = reader.SumBytes(checksumEnd - checksumStart, checksumStart);
+            if (checksum != sum)
+            {
+                std::cerr << std::format("Header checksum mismatch. Expected: 0x{:08X}, Calculated: 0x{:08X}.\n",
+                                         checksum, sum);
+                isValid = false;
+            }
+        }
+        else
+        {
+            std::cerr << "Save file is incomplete, possibly truncated." << std::endl;
+            isValid = false;
+        }
     }
 
     // Only continue if the file has the proper signature, and a valid checksum.
@@ -114,10 +131,18 @@ SaveFile::SaveFile(const std::string path)
                                          numSongs, numSongsCopy, numSongs);
             }
             numberOfSongs = numSongs;
+
+            if (!reader.Has(static_cast<size_t>(numberOfSongs) * 0x28, 0x4D))
+            {
+                std::cerr << "Save file is incomplete, possibly truncated." << std::endl;
+                isValid = false;
+                return;
+            }
         }
 
+
         std::vector<SongIdentifier> songIdentifiers;
-        songIdentifiers.reserve(numberOfSongs);
+        songIdentifiers.reserve(static_cast<size_t>(numberOfSongs));
         auto savedSongCount = 0;
         // Parse each stored song one at a time.
         for (int i = 0; i < numberOfSongs; ++i)
@@ -154,15 +179,15 @@ SaveFile::SaveFile(const std::string path)
 
             if (saveFormat == M01D)
             {
-                const auto savePath = std::filesystem::path(path);
-                const auto songPath =
-                    savePath.parent_path().append(std::format("M01Dn_{:08x}", identifier.songLocation));
+                const auto songPath = parentDir / std::format("M01Dn_{:08x}", identifier.songLocation);
                 songBytes = ReadWholeFile(songPath);
                 songReader = ByteReader(songBytes);
             }
 
+            const SongSource songSource{.name = identifier.name, .songLength = identifier.songLength};
+
             const auto song =
-                DecodeSongData(songReader, identifier, saveFormat == M01D ? 0x00 : identifier.songLocation);
+                DecodeSongData(songReader, songSource, saveFormat == M01D ? 0x00 : identifier.songLocation);
             if (song.has_value())
             {
                 songs.push_back(*song);

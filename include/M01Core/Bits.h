@@ -1,5 +1,6 @@
 //
-// Created by myst on 8/22/26.
+// Author: Mystievous <mystievous@starseekstudios.com>
+// Creation Date: 8/22/2026
 //
 
 #ifndef M01_CONVERTER_BITS_H

@@ -18,6 +18,7 @@ add_library(M01Core
         M01Core.cpp
         InstrumentHelper.cpp
         SaveFile.cpp
+        SongFile.cpp
         FileBytes.cpp
         SongDecoder.cpp
         MidiExport.cpp

@@ -7,9 +7,9 @@
 #define M01_CONVERTER_FILEBYTES_H
 
 #include <cstddef>
-#include <string>
+#include <filesystem>
 #include <vector>
 
-std::vector<std::byte> ReadWholeFile(const std::string& path);
+std::vector<std::byte> ReadWholeFile(const std::filesystem::path& path);
 
 #endif // M01_CONVERTER_FILEBYTES_H
