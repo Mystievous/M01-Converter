@@ -9,6 +9,7 @@
 #include <iostream>
 #include <optional>
 #include <utility>
+#include <filesystem>
 
 #include "M01Core/InstrumentHelper.h"
 #include "M01Core/SaveStructure.h"
@@ -254,7 +255,7 @@ namespace
     };
 } // namespace
 
-smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& configPath)
+smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::filesystem::path& configPath)
 {
     InstrumentHelper instrumentHelper;
     instrumentHelper.LoadConfigFile(configPath);

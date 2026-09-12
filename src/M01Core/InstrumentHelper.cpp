@@ -5,6 +5,7 @@
 
 #include "M01Core/InstrumentHelper.h"
 
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <ranges>
@@ -175,7 +176,7 @@ static std::optional<uint8_t> ReadRangedByte(const YAML::Node& parent, const std
     return ToRangedByte(node, field, maxValue);
 }
 
-void InstrumentHelper::LoadConfigFile(const std::string& configPath)
+void InstrumentHelper::LoadConfigFile(const std::filesystem::path& configPath)
 {
     config_.clear();
     configLoaded_ = false;
@@ -183,21 +184,21 @@ void InstrumentHelper::LoadConfigFile(const std::string& configPath)
     YAML::Node root;
     try
     {
-        root = YAML::LoadFile(configPath);
+        root = YAML::LoadFile(configPath.string());
     }
     catch (const YAML::BadFile&)
     {
-        throw std::runtime_error(std::format("Could not open config file '{}'.", configPath));
+        throw std::runtime_error(std::format("Could not open config file '{}'.", configPath.string()));
     }
     catch (const YAML::ParserException& e)
     {
-        throw std::runtime_error(std::format("Config file '{}' is not valid YAML: {}", configPath, e.what()));
+        throw std::runtime_error(std::format("Config file '{}' is not valid YAML: {}", configPath.string(), e.what()));
     }
 
     const auto instruments = root["Instruments"];
     if (!instruments)
     {
-        throw std::runtime_error(std::format("Config file '{}' has no 'Instruments' section.", configPath));
+        throw std::runtime_error(std::format("Config file '{}' has no 'Instruments' section.", configPath.string()));
     }
 
     int skippedEntries = 0;
@@ -271,7 +272,7 @@ void InstrumentHelper::LoadConfigFile(const std::string& configPath)
 
     if (skippedEntries != 0)
     {
-        std::cerr << std::format("Config file '{}': {} entries skipped.\n", configPath, skippedEntries);
+        std::cerr << std::format("Config file '{}': {} entries skipped.\n", configPath.string(), skippedEntries);
     }
 
     configLoaded_ = true;

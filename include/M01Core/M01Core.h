@@ -21,6 +21,7 @@ namespace M01Core
 
     // Convert a .sav file at `path` and return conversion results for each song.
     // Throws std::runtime_error on I/O/format errors.
-    std::vector<ConversionResult> ConvertFile(const std::filesystem::path& path, bool extended = false,
-                                              const std::string& configPath = "config.yml");
+    std::vector<ConversionResult>
+    ConvertFile(const std::filesystem::path& path, bool extended = false,
+                const std::filesystem::path& configPath = std::filesystem::path("config.yml"));
 } // namespace M01Core

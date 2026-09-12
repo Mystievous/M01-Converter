@@ -149,16 +149,7 @@ SaveFile::SaveFile(std::span<const std::byte> bytes, const std::filesystem::path
         {
             songIdentifiers.emplace_back(DecodeSongIdentifier(reader));
 
-            auto& songIdentifier = songIdentifiers.back();
-
-            const auto duplicateNames =
-                std::count_if(songIdentifiers.begin(), songIdentifiers.end(),
-                              [&songIdentifier](SongIdentifier i) { return i.name == songIdentifier.name; });
-
-            if (duplicateNames > 1)
-            {
-                songIdentifier.name = std::format("{} ({})", songIdentifier.name, duplicateNames - 1);
-            }
+            const auto& songIdentifier = songIdentifiers.back();
 
             if (songIdentifier.songHasData)
             {

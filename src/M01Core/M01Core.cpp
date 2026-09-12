@@ -2,12 +2,13 @@
 // Author: Mystievous <mystievous@starseekstudios.com>
 // Creation Date: 11/23/2025
 //
+//
+#include "M01Core/M01Core.h"
 
 #include <stdexcept>
 #include <filesystem>
 #include <iostream>
 
-#include "M01Core/M01Core.h"
 #include "M01Core/ByteReader.h"
 #include "M01Core/FileBytes.h"
 #include "M01Core/MidiExport.h"
@@ -18,7 +19,7 @@
 namespace M01Core
 {
     std::vector<ConversionResult> ConvertFile(const std::filesystem::path& path, const bool extended,
-                                              const std::string& configPath)
+                                              const std::filesystem::path& configPath)
     {
         const std::vector<std::byte> bytes = ReadWholeFile(path);
 

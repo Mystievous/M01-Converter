@@ -6,6 +6,7 @@
 #ifndef INSTRUMENTHELPER_M
 #define INSTRUMENTHELPER_M
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 #include <map>
 #include <string>
@@ -51,7 +52,7 @@ public:
 
     [[nodiscard]] InstrumentName GetInstrumentName(InstrumentId id) const;
 
-    void LoadConfigFile(const std::string& configPath);
+    void LoadConfigFile(const std::filesystem::path& configPath);
 
     [[nodiscard]] InstrumentConfig GetInstrumentConfig(InstrumentId id) const;
 

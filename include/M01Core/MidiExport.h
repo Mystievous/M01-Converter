@@ -8,9 +8,10 @@
 
 #include "M01Core/SaveStructure.h"
 #include "MidiFile.h"
+#include <filesystem>
 
 smf::MidiFile MakeMidiFile(const SongData& song);
 
-smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::string& configPath);
+smf::MidiFile MakeExtendedMidiFile(const SongData& song, const std::filesystem::path& configPath);
 
 #endif // M01_CONVERTER_MIDIEXPORT_H
