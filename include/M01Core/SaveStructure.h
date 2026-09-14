@@ -7,13 +7,100 @@
 #define SAVESTRUCTURE_H
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <optional>
+#include <string_view>
 
 constexpr int kNumberOfInstruments = 8;
 constexpr int kNumberOfMeasures = 99;
 constexpr int kNumberOfDrumSamples = 12;
+constexpr int kM01NumberOfSongs = 10;
+
+// Also shows up on a new save in the "checksum" field of the second/copied header
+constexpr std::string_view kM01HeaderEndString = "BFBA";
+constexpr uint32_t kM01HeaderEndAddress = 0xFFC;
+
+constexpr uint32_t kM01FirstSongAddress = 0x1000;
+constexpr uint32_t kM01FollowingSongsOffset = 0xC000;
+constexpr uint32_t kM01StaticFileSize = 0x80000;
+
+constexpr uint32_t kM01DInitialSongID = 0x100000;
+
+// Song data version did not change between M01 and M01D
+constexpr uint32_t kSongDataVersion = 0x01;
+
+constexpr std::string_view kFileSignature = "M01W";
+constexpr std::string_view kSongMarker = "song";
+
+enum class SaveFormat : uint8_t
+{
+    M01,
+    M01D
+};
+
+constexpr uint32_t kM01SongVersion = 0x04;
+constexpr uint32_t kM01DSongVersion = 0x05;
+
+constexpr uint32_t GetSongVersion(const SaveFormat saveFormat)
+{
+    switch (saveFormat)
+    {
+    case SaveFormat::M01: return kM01SongVersion;
+    case SaveFormat::M01D: return kM01DSongVersion;
+    }
+    throw std::runtime_error("Unknown SaveFormat");
+}
+
+constexpr std::optional<SaveFormat> FormatFromSongVersion(const uint32_t version)
+{
+    switch (version)
+    {
+    case kM01SongVersion: return SaveFormat::M01;
+    case kM01DSongVersion: return SaveFormat::M01D;
+    default: return std::nullopt;
+    }
+}
+
+constexpr uint32_t kM01SaveVersion = 0x04;
+constexpr uint32_t kM01DSaveVersion = 0x07;
+
+constexpr uint32_t GetSaveVersion(const SaveFormat saveFormat)
+{
+    switch (saveFormat)
+    {
+    case SaveFormat::M01: return kM01SaveVersion;
+    case SaveFormat::M01D: return kM01DSaveVersion;
+    }
+    throw std::runtime_error("Unknown SaveFormat");
+}
+
+constexpr std::optional<SaveFormat> FormatFromSaveVersion(const uint32_t version)
+{
+    switch (version)
+    {
+    case kM01SaveVersion: return SaveFormat::M01;
+    case kM01DSaveVersion: return SaveFormat::M01D;
+    default: return std::nullopt;
+    }
+}
+
+constexpr uint32_t kM01UninitializedSongLength = 0xA1F4;
+constexpr uint32_t kM01DUninitializedSongLength = 0x300;
+
+constexpr uint32_t GetUninitializedSongLength(const SaveFormat saveFormat)
+{
+    switch (saveFormat)
+    {
+    case SaveFormat::M01: return kM01UninitializedSongLength;
+    case SaveFormat::M01D: return kM01DUninitializedSongLength;
+    }
+    throw std::runtime_error("Unknown SaveFormat");
+}
+
+constexpr uint32_t kM01DFileSizeRound = 0x100;
+
 
 // clang-format off
 enum class KaosMode : uint8_t
@@ -76,7 +163,7 @@ struct Instrument
     uint8_t volume = 0;
     int8_t panning = 0;
     PlaybackState playbackState;
-    std::vector<DrumInfo> drumInfo;
+    std::vector<DrumInfo> drumInfos;
 };
 
 enum class ReverbType : uint8_t
@@ -100,6 +187,14 @@ struct DelayInfo
     int8_t panRatio = 0;
     uint8_t feedback = 0;
     uint8_t level = 0;
+};
+
+enum class Tag : uint16_t
+{
+    End = 0x0000,
+    MasterInfo = 0x0201,
+    MeasureInfo = 0x0104,
+    PatternData = 0x0105,
 };
 
 struct MasterInfo
@@ -144,12 +239,13 @@ struct Track
     std::vector<std::optional<Pattern>> measures;
 };
 
+constexpr uint32_t kSongIdentifierLength = 0x28;
 struct SongIdentifier
 {
-    bool songHasData;
+    bool hasData;
     std::string name;
-    uint32_t songLocation;
-    uint32_t songLength;
+    uint32_t location; // Byte address for M01, file ID for M01D
+    uint32_t length;
 };
 
 struct SongSource

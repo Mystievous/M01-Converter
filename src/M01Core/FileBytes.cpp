@@ -28,3 +28,22 @@ std::vector<std::byte> ReadWholeFile(const std::filesystem::path& path)
 
     return bytes;
 }
+
+void WriteWholeFile(const std::filesystem::path& path, std::span<const std::byte> bytes)
+{
+    std::ofstream file(path, std::ios::binary);
+    if (!file)
+    {
+        throw std::runtime_error("Cannot open file to write: " + path.string());
+    }
+
+    const auto size = bytes.size();
+
+    file.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(size));
+    file.close();
+
+    if (!file)
+    {
+        throw std::runtime_error("Failed to write file: " + path.string());
+    }
+}

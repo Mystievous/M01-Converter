@@ -9,25 +9,30 @@
 #include <filesystem>
 #include <cstddef>
 #include <span>
-#include <string_view>
+#include <algorithm>
+#include <optional>
 
 #include "M01Core/SaveStructure.h"
-
-constexpr std::string_view kFileSignature = "M01W";
 
 class SaveFile
 {
     bool isValid = false;
-    std::vector<SongData> songs;
+    std::vector<std::optional<SongData>> songs;
 
 public:
     explicit SaveFile(std::span<const std::byte> bytes, const std::filesystem::path& parentDir);
 
     [[nodiscard]] bool IsValid() const;
 
-    [[nodiscard]] int GetNumberOfSongs() const { return static_cast<int>(songs.size()); }
+    [[nodiscard]] int GetIndexSize() const { return static_cast<int>(songs.size()); }
 
-    [[nodiscard]] const std::vector<SongData>& GetSongs() const { return songs; }
+    [[nodiscard]] int GetNumberOfSongsWithData() const
+    {
+        return std::count_if(songs.begin(), songs.end(),
+                             [](const std::optional<SongData>& song) { return song.has_value(); });
+    }
+
+    [[nodiscard]] const std::vector<std::optional<SongData>>& GetSongs() const { return songs; }
 };
 
 #endif // SAVEFILE_H

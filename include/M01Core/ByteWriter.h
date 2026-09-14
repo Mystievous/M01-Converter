@@ -54,7 +54,7 @@ public:
         Write<U>(static_cast<U>(value));
     }
 
-    void WriteBytes(const std::span<const std::byte> bytes) { data_.insert(data_.end(), bytes.begin(), bytes.end()); }
+    void WriteBytes(std::span<const std::byte> bytes) { data_.insert(data_.end(), bytes.begin(), bytes.end()); }
 
     void WriteString(const std::string_view value, const size_t width)
     {
@@ -67,6 +67,18 @@ public:
     }
 
     void Pad(const std::byte value, const size_t count) { data_.insert(data_.end(), count, value); }
+
+    void PadUntil(const std::byte value, const size_t untilAddress)
+    {
+        if (untilAddress < Position())
+        {
+            throw std::runtime_error(
+                std::format("Tried to pad until 0x{:08X}, which is before the current position of 0x{:08X}",
+                            untilAddress, Position()));
+        }
+        const auto length = untilAddress - Position();
+        Pad(value, length);
+    }
 
     [[nodiscard]] uint32_t SumBytes(const size_t length, const size_t offset) const
     {
