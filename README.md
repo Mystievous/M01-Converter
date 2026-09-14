@@ -16,6 +16,9 @@ It has two modes of running:
 Thank you to [f4mi](https://bsky.app/profile/f4mi.bsky.social) for the inspiration, go check
 out [their video on the topic](https://www.youtube.com/watch?v=7ptN-3RT8yA)!
 
+### **New in 1.3.0**
+You can now convert from one save file to another! See more below.
+
 ## Usage
 
 Download the version for your platform from [releases](https://github.com/Mystievous/M01-Converter/releases).
@@ -49,6 +52,31 @@ Or, if you want to use the extended export, make sure the config.yml is next to 
 ./M01-Converter -e M01Dn_00000000 # M01D
 ./M01-Converter -e M01Dn_00100000 # M01D single song
 ```
+
+You can convert to another save format by manually specifying the export type (default `MIDI`)
+```sh
+# Windows
+./M01-Converter.exe -e --type M01D SaveFile.sav # Convert M01 to M01D
+./M01-Converter.exe -e --type M01 M01Dn_00000000 # Convert M01D to M01 (Truncates song list to 10 songs maximum)
+
+# Linux/Mac
+./M01-Converter -e --type M01D SaveFile.sav # Convert M01 to M01D
+./M01-Converter -e --type M01 M01Dn_00000000 # Convert M01D to M01 (Truncates song list to 10 songs maximum)
+```
+
+### Command Flags/Arguments
+```
+M01-Converter [OPTION...] input_file
+
+-h, --help        Show help
+-e, --extended    Create an 'extended' MIDI file. Only applies to MIDI export type.
+-c, --config arg  Path to a custom config file for 'extended' export. By
+                  default it is 'config.yml'.
+-t, --type arg    The type of output, options are `MIDI`, `M01`, and
+                  `M01D`
+-o, --output arg  Directory to output files into.
+```
+
 
 ### M01D
 

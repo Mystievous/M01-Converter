@@ -18,16 +18,18 @@ add_library(M01Core
         M01Core.cpp
         InstrumentHelper.cpp
         SaveFile.cpp
+        SaveEncoder.cpp
         SongFile.cpp
         FileBytes.cpp
         SongDecoder.cpp
+        SongEncoder.cpp
         MidiExport.cpp
 )
 
 if (MSVC)
     target_compile_options(M01Core PRIVATE /W4)
 else ()
-    target_compile_options(M01Core PRIVATE -Wall -Wextra)
+    target_compile_options(M01Core PRIVATE -Wall -Wextra -Wmissing-declarations)
 endif ()
 
 target_link_libraries(M01Core PRIVATE yaml-cpp::yaml-cpp midifile)

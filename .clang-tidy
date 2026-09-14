@@ -1,0 +1,22 @@
+---
+Checks: >
+  -*,
+  performance-unnecessary-value-param,
+  performance-for-range-copy,
+  performance-unnecessary-copy-initialization,
+  performance-move-const-arg,
+  performance-trivially-destructible,
+  readability-const-return-type,
+  bugprone-use-after-move,
+  bugprone-dangling-handle,
+  bugprone-return-const-ref-from-parameter,
+  bugprone-signed-char-misuse,
+  bugprone-sizeof-expression,
+  bugprone-suspicious-memory-comparison,
+  bugprone-macro-parentheses
+
+# Only headers written for this project
+HeaderFilterRegex: 'include/M01Core/.*\.h$'
+
+WarningsAsErrors: ""
+FormatStyle: file

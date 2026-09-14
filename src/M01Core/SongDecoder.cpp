@@ -75,21 +75,6 @@ static constexpr std::string_view ToString(const ReverbType reverbType)
     return "UNKNOWN";
 }
 
-constexpr uint32_t kM01SongVersion = 0x04;
-constexpr uint32_t kM01DSongVersion = 0x05;
-
-namespace
-{
-    enum SongFormat
-    {
-        M01,
-        M01D
-    };
-}
-
-// Song data version did not change between M01 and M01D
-constexpr uint32_t kSongDataVersion = 0x01;
-
 static Instrument DecodeInstrument(ByteReader& reader, const SongSource& source)
 {
     const auto bank = reader.Read<uint8_t>();
@@ -164,18 +149,7 @@ static Instrument DecodeInstrument(ByteReader& reader, const SongSource& source)
         .volume = volume,
         .panning = panning,
         .playbackState = playbackState,
-        .drumInfo = std::move(drumInfos),
-    };
-}
-
-namespace
-{
-    enum class Tag : uint16_t
-    {
-        End = 0x0000,
-        MasterInfo = 0x0201,
-        MeasureInfo = 0x0104,
-        PatternData = 0x0105,
+        .drumInfos = std::move(drumInfos),
     };
 }
 
@@ -195,18 +169,8 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongSource& sou
     }
 
     const auto songVersion = reader.Read<uint32_t>();
-
-    SongFormat songFormat = M01;
-
-    if (songVersion == kM01SongVersion)
-    {
-        songFormat = M01;
-    }
-    else if (songVersion == kM01DSongVersion)
-    {
-        songFormat = M01D;
-    }
-    else
+    const auto songFormat = FormatFromSongVersion(songVersion);
+    if (!songFormat.has_value())
     {
         std::cerr << std::format("Song {} has an unsupported song version, {}. Skipping\n", source.name, songVersion);
         return std::nullopt;
@@ -260,7 +224,7 @@ std::optional<SongData> DecodeSongData(ByteReader& reader, const SongSource& sou
 
     reader.Skip(0x0C);
 
-    if (songFormat == M01D)
+    if (songFormat == SaveFormat::M01D)
     {
         const auto v5_marker = reader.ReadString(4);
         if (v5_marker != kSongMarker)

@@ -9,12 +9,9 @@
 #include <filesystem>
 #include <optional>
 #include <span>
-#include <string_view>
 #include <cstddef>
 
 #include "M01Core/SaveStructure.h"
-
-constexpr std::string_view kSongMarker = "song";
 
 std::optional<SongData> LoadSongFile(std::span<const std::byte> bytes, const std::filesystem::path& path);
 

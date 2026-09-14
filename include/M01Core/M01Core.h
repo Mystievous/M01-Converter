@@ -10,18 +10,26 @@
 
 #include "MidiFile.h"
 
+#include "M01Core/SaveEncoder.h"
+
 namespace M01Core
 {
     // High-level conversion result for a single song
-    struct ConversionResult
+    struct MIDIResult
     {
         std::string name;
         smf::MidiFile midi;
     };
 
-    // Convert a .sav file at `path` and return conversion results for each song.
-    // Throws std::runtime_error on I/O/format errors.
-    std::vector<ConversionResult>
-    ConvertFile(const std::filesystem::path& path, bool extended = false,
-                const std::filesystem::path& configPath = std::filesystem::path("config.yml"));
+    std::vector<MIDIResult> ConvertToMidi(const std::filesystem::path& path, bool extended,
+                                          const std::filesystem::path& configPath);
+
+    std::vector<EncodedSaveFile> ConvertToSave(const std::filesystem::path& path, SaveFormat format);
 } // namespace M01Core
+
+enum class ExportType
+{
+    MIDI,
+    M01,
+    M01D
+};
