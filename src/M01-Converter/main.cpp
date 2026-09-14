@@ -57,14 +57,14 @@ constexpr std::string SanitizeFileName(std::string_view name)
 
 int main(const int argc, char** argv)
 {
-    cxxopts::Options options("M01-Converter", "Convert songs from Korg M01 (NDS) and M01D (3DS) to MIDI files");
+    cxxopts::Options options("M01-Converter", "Convert save files from Korg M01 (NDS) and M01D (3DS) software.");
     // clang-format off
     options.add_options()
         ("h,help", "Show help")
-        ("e,extended", "Create an 'extended' MIDI file.")
+        ("e,extended", "Create an 'extended' MIDI file. Only applies to MIDI export type.")
         ("c,config", "Path to a custom config file for 'extended' export. By default it is 'config.yml'.", cxxopts::value<std::string>())
         ("t,type", "The type of output, options are `MIDI`, `M01`, and `M01D`", cxxopts::value<std::string>())
-        ("o,output", "Directory to output MIDI files into.", cxxopts::value<std::string>())
+        ("o,output", "Directory to output files into.", cxxopts::value<std::string>())
         ("i,input", "Input file", cxxopts::value<std::string>());
     // clang-format on
 
